@@ -24,9 +24,9 @@ class GameConfig:
     screen_height: int = 600
     
     # Física do jogo
-    gravity: float = 0.5
-    jump_strength: float = -10.0
-    max_fall_speed: float = 12.0
+    gravity: float = 0.3
+    jump_strength: float = -8.0
+    max_fall_speed: float = 8.0
     
     # Pássaro
     bird_x: int = 80
@@ -34,10 +34,10 @@ class GameConfig:
     bird_color: Tuple[int, int, int] = (255, 255, 0)  # Amarelo
     
     # Obstáculos (canos)
-    pipe_width: int = 60
-    pipe_gap: int = 180
-    pipe_speed: float = 3.0
-    pipe_spawn_interval: int = 90  # frames
+    pipe_width: int = 50
+    pipe_gap: int = 250  # Espaço maior para passar
+    pipe_speed: float = 2.0  # Mais lento
+    pipe_spawn_interval: int = 150  # Mais tempo entre canos
     pipe_color: Tuple[int, int, int] = (0, 200, 0)  # Verde
     
     # Cores
@@ -68,7 +68,7 @@ class HandTrackingConfig:
     smoothing_window_size: int = 5
     
     # Threshold para detecção de mão aberta/fechada
-    hand_open_threshold: float = 0.15  # Distância entre dedos
+    hand_open_threshold: float = 0.05  # Distância entre dedos (reduzido para maior sensibilidade)
     
     # Flip horizontal da câmera (espelho)
     flip_horizontal: bool = True
@@ -142,7 +142,7 @@ CONFIG = AppConfig(
         target_fps=60,
     ),
     hand_tracking=HandTrackingConfig(
-        camera_index=0,
+        camera_index=1,  # Brio 305
         smoothing_window_size=5,
         min_detection_confidence=0.7,
     ),

@@ -73,7 +73,7 @@ class GestureMapper:
         
         # Contador para debounce de transições
         self.transition_frames = 0
-        self.debounce_threshold = 3  # frames necessários para confirmar transição
+        self.debounce_threshold = 1  # frames necessários para confirmar transição (reduzido para resposta imediata)
         
         # Estatísticas
         self.total_jumps = 0

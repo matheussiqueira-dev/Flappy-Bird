@@ -235,9 +235,9 @@ class HandTracker:
             is_open = tip.y < pip.y - self.config.hand_open_threshold
             finger_states.append(is_open)
         
-        # Mão aberta se maioria dos dedos está aberta (3+ dedos)
+        # Mão aberta se 2+ dedos estão abertos (mais sensível)
         open_count = sum(finger_states)
-        is_open = open_count >= 3
+        is_open = open_count >= 2
         
         return is_open, finger_states
     
