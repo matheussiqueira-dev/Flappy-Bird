@@ -1,0 +1,17 @@
+# Dependências do Flappy Bird com Controle por Gestos
+# Python 3.8+
+
+# Motor do jogo
+pygame>=2.5.0
+
+# Visão computacional
+opencv-python>=4.8.0
+
+# Detecção de mão
+mediapipe>=0.10.0
+
+# Operações numéricas
+numpy>=1.24.0
+
+# Tipagem (incluso no Python 3.8+, mas listado para compatibilidade)
+typing-extensions>=4.0.0
