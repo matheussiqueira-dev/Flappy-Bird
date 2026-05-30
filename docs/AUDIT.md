@@ -1,134 +1,125 @@
 # Auditoria Técnica
 
-Data da auditoria: 29 de maio de 2026  
-Responsável pelo projeto: Matheus Siqueira  
-Repositório: https://github.com/matheussiqueira-dev/Flappy-Bird
+Data da auditoria: 30 de maio de 2026
+Responsável pelo projeto: Matheus Siqueira
+Portfólio: https://www.matheussiqueira.dev
+LinkedIn: https://www.linkedin.com/in/matheussiqueira-dev
 
 ## Diagnóstico Executivo
 
-O projeto recebido era uma aplicação desktop em Python, organizada em módulos claros para rastreamento de mão, mapeamento de gestos e gameplay. A arquitetura local era adequada para uma demonstração técnica, mas não estava pronta para produção web, Vercel, SEO, PWA, analytics, dashboard, apresentação pública ou crescimento como produto.
+O repositório começou como uma aplicação desktop em Python para jogar Flappy Bird com controle por gestos via webcam. A engine local já tinha separação clara entre captura, mapeamento de gestos e lógica de jogo, mas não era uma aplicação web deployável, não possuía SEO, PWA, analytics, dashboard, CI ou preparação direta para Vercel.
 
-A solução aplicada preserva a engine Python original e adiciona uma aplicação Next.js profissional na raiz do projeto.
+A arquitetura atual preserva a engine Python e adiciona uma camada web profissional com Next.js App Router, TypeScript, dashboard desacoplado, APIs, observabilidade, segurança, documentação e fluxo de deploy.
 
-## Stack Original
+## Classificação dos Problemas
 
-- Python
-- Pygame
-- OpenCV
-- MediaPipe
-- NumPy
+### CRÍTICO
 
-## Stack Adicionada
+- Ausência original de aplicação web pronta para produção.
+- Engine Pygame/OpenCV incompatível com runtime serverless da Vercel.
+- Falta original de build web, rotas, metadata, PWA e deploy configurável.
 
-- Next.js App Router
-- React
-- TypeScript strict
-- Canvas API
-- Vercel Analytics
-- Vercel Speed Insights
-- PWA com service worker
-- SEO técnico programático
+### ALTO
 
-## Problemas Encontrados
+- Falta original de dashboard e contratos de dados.
+- Falta original de headers de segurança.
+- Falta original de health check e logs estruturados.
+- Ausência de CI para proteger o repositório público.
+- Dependência de webcam para qualquer demonstração do produto.
 
-### Crítico
+### MÉDIO
 
-- Não havia aplicação web deployável.
-- Não havia `package.json`, build web ou configuração Next.js.
-- A engine Pygame/OpenCV não é compatível diretamente com Vercel serverless.
-- Não havia SEO técnico, PWA, analytics, observabilidade ou dashboard.
+- README anterior não cobria arquitetura, deploy, observabilidade e roadmap com profundidade suficiente.
+- Não havia camada clara para trocar mock data por dados reais.
+- Service worker precisava evitar cache indevido de APIs.
+- Manifest PWA podia ser mais completo para instalação e atalhos.
+- `.gitignore` ignorava qualquer pasta `lib/`, incluindo `src/lib`, o que poderia deixar contratos TypeScript fora do GitHub.
 
-### Alto
+### BAIXO
 
-- README anterior tinha problemas visuais de encoding em alguns ambientes.
-- Link de clone indicava `Flapy-Bird`, diferente do repositório real `Flappy-Bird`.
-- Não havia headers de segurança.
-- Não havia health check.
-- `.gitignore` ignorava `*.png` e `*.jpg` globalmente, o que poderia esconder assets legítimos.
-- A experiência dependia de webcam e bibliotecas nativas para qualquer demonstração.
-
-### Médio
-
-- Não havia estrutura de rotas, shell de navegação, páginas institucionais ou configurações.
-- Não havia separação para dados analíticos futuros.
-- Não havia documentação de deploy na Vercel.
-- Não havia `.env.example`.
-- Não havia TypeScript, lint ou typecheck.
-
-### Baixo
-
-- Assets estavam apenas planejados.
-- Roadmap não refletia a nova direção web.
-- Créditos do desenvolvedor não estavam integrados permanentemente à interface web.
+- Necessidade de refinar linguagem visual e consistência de componentes.
+- Necessidade de centralizar créditos permanentes do desenvolvedor.
+- Necessidade de documentar variáveis opcionais de analytics e error tracking.
 
 ## Funcionalidades Preservadas
 
-- `main.py`: loop principal Python
-- `config.py`: configuração da engine local
-- `hand_tracking.py`: captura e rastreamento da mão
-- `gesture_mapping.py`: interpretação dos gestos
-- `game_logic.py`: física, colisões, pontuação e renderização Pygame
-- `requirements.txt`: dependências Python
+- `main.py`: entrada da aplicação desktop.
+- `config.py`: configuração da engine local.
+- `hand_tracking.py`: captura e rastreamento de mão.
+- `gesture_mapping.py`: interpretação dos gestos.
+- `game_logic.py`: física, colisões, pontuação e renderização Pygame.
+- `requirements.txt`: dependências da versão Python.
 
 ## Correções e Melhorias Aplicadas
 
-- Criação de aplicação Next.js com App Router.
-- Criação de layout responsivo com landing page, dashboard, demo, perfil e página institucional.
-- Implementação de demo jogável em canvas no navegador.
-- Implementação de dashboard inteligente com KPIs, gráficos, alertas e insights.
-- Implementação de PWA com manifest, ícones, service worker e página offline.
-- Implementação de SEO técnico com metadata, canonical, Open Graph, Twitter Card, sitemap, robots e structured data.
-- Implementação de analytics com Vercel Analytics, Speed Insights e GA4 opcional.
-- Implementação de headers de segurança em `next.config.ts`.
-- Criação de endpoint `/api/health`.
-- Criação de `.env.example`.
-- Criação de `vercel.json`.
-- Atualização de `.gitignore` para não ocultar assets visuais.
-- Reescrita completa do README.
-- Inclusão de créditos permanentes na interface e documentação.
+- Aplicação Next.js com App Router e TypeScript strict.
+- Landing page responsiva com demo visual do produto.
+- Demo jogável em Canvas sem dependências nativas.
+- Dashboard inteligente com KPIs, gráficos, score de saúde, comparativos, alertas e insights.
+- Contrato de dados centralizado em `src/lib/dashboard-data.ts`.
+- API `GET /api/dashboard` com versionamento de schema e logs estruturados.
+- API `GET /api/health` com status, ambiente, região, commit e checks.
+- Observabilidade server-side em `src/lib/observability.ts`.
+- `src/instrumentation.ts` para sinalização de boot no runtime Node.js.
+- PWA com manifest, service worker, ícones, atalhos e página offline.
+- SEO com metadata, canonical, Open Graph, Twitter image, sitemap e robots.
+- Analytics com Vercel Analytics, Speed Insights e GA4 opcional.
+- Headers de segurança em `next.config.ts`.
+- Ajuste do `.gitignore` para preservar `src/lib` no controle de versão.
+- CI com GitHub Actions para typecheck, lint, build e compile Python.
+- README reescrito com instruções de execução, APIs, deploy e roadmap.
+- Créditos permanentes integrados à interface e documentação.
 
-## Arquitetura Alvo
+## Arquitetura Atual
 
 ```text
-Usuário
-  -> Next.js App Router
-  -> Landing / Demo / Dashboard / Perfil / Sobre
-  -> Analytics Provider
-  -> Vercel Analytics, Speed Insights e GA4 opcional
+Next.js App Router
+  -> UI pública e rotas de produto
+  -> APIs server-side
+  -> SEO/PWA/metadata
 
-Engine original
-  -> Python local
-  -> OpenCV + MediaPipe
-  -> Gesture Mapper
-  -> Pygame
+Camada de dados
+  -> dashboard-data.ts
+  -> mock data isolado
+  -> contrato pronto para banco, GA4 ou Vercel Analytics export
+
+Observabilidade
+  -> logs estruturados
+  -> health endpoint
+  -> error webhook opcional
+
+Engine Python preservada
+  -> execução local com webcam
+  -> sem acoplamento ao runtime Vercel
 ```
 
 ## Riscos Mitigados
 
-- Incompatibilidade Vercel/Pygame mitigada por separação entre engine local e web app.
-- Dependência de webcam mitigada por demo web em canvas.
-- Falta de observabilidade mitigada por camada de analytics.
-- Falta de SEO mitigada por rotas metadata e OG image.
-- Falta de PWA mitigada por manifest e service worker.
-- Regressão na engine original mitigada mantendo os arquivos Python sem reescrita funcional.
+- Incompatibilidade Vercel/Pygame mitigada pela separação entre engine local e experiência web.
+- Risco de regressão da engine mitigado por preservação dos módulos Python.
+- Risco de cache incorreto mitigado no service worker ao ignorar APIs.
+- Risco de falta de rastreabilidade mitigado por logs estruturados e health checks.
+- Risco de apresentação pública fraca mitigado por interface, documentação, SEO e PWA.
 
 ## Validações Executadas
 
-- `python -m compileall .`
-- `npm run typecheck`
-- `npm run lint`
-- `npm run build`
-- `npm audit --audit-level=moderate`
 - `python -m py_compile config.py game_logic.py gesture_mapping.py hand_tracking.py main.py`
-- `GET /api/health`
-- `npm run verify:browser`
+- `npm.cmd run typecheck`
+- `npm.cmd run lint`
+- `npm.cmd run build`
 
-Resultado final: build, typecheck, lint, auditoria de dependências, health check e inspeção visual passaram.
+Validações adicionais recomendadas antes de produção:
 
-## Próximos Passos Recomendados
+- `npm.cmd run audit`
+- `npm.cmd run verify:browser` com servidor local ativo
+- Deploy preview na Vercel
+- Inspeção de logs após o primeiro deploy
 
-- Adicionar testes E2E com Playwright.
-- Persistir eventos reais de jogo.
+## Roadmap Técnico
+
+- Persistir eventos reais de gameplay.
+- Conectar dashboard a banco analítico ou stream de eventos.
 - Integrar MediaPipe Tasks Vision no navegador.
-- Criar CI/CD com GitHub Actions e Vercel preview deployments.
-- Adicionar error tracking dedicado se o projeto evoluir para uso público.
+- Adicionar testes E2E mais completos.
+- Adicionar Sentry, Datadog ou outro error tracking dedicado.
+- Publicar métricas reais de Core Web Vitals após tráfego inicial.

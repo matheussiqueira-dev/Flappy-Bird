@@ -1,4 +1,4 @@
-const CACHE_NAME = "flappy-gestures-v1";
+const CACHE_NAME = "flappy-gestures-v2";
 const CORE_ASSETS = ["/", "/offline", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -20,8 +20,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  if (request.method !== "GET") {
+  if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/") || url.pathname.includes("__nextjs")) {
     return;
   }
 

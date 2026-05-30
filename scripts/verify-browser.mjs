@@ -36,6 +36,11 @@ try {
     results.push({ route, title, textLength, overlayCount, horizontalOverflow });
   }
 
+  const [health, dashboardApi] = await Promise.all([
+    page.evaluate((url) => fetch(`${url}/api/health`).then((response) => response.json()), baseUrl),
+    page.evaluate((url) => fetch(`${url}/api/dashboard`).then((response) => response.json()), baseUrl),
+  ]);
+
   await page.goto(`${baseUrl}/play`, { waitUntil: "networkidle" });
   await page.waitForTimeout(800);
   const canvasNonBlank = await page.locator("canvas").evaluate((canvas) => {
@@ -72,6 +77,12 @@ try {
   const report = {
     baseUrl,
     results,
+    health,
+    dashboardApi: {
+      schemaVersion: dashboardApi.schemaVersion,
+      kpis: dashboardApi.kpis?.length,
+      alerts: dashboardApi.alerts?.length,
+    },
     canvasNonBlank,
     statusText,
     mobileOverflow,
@@ -81,7 +92,14 @@ try {
 
   console.log(JSON.stringify(report, null, 2));
 
-  if (failedRoute || !canvasNonBlank || mobileOverflow || errors.length > 0) {
+  if (
+    failedRoute ||
+    health.status !== "ok" ||
+    dashboardApi.schemaVersion !== "2026-05-30" ||
+    !canvasNonBlank ||
+    mobileOverflow ||
+    errors.length > 0
+  ) {
     process.exitCode = 1;
   }
 } finally {

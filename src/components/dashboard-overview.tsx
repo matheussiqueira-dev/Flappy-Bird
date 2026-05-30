@@ -8,11 +8,27 @@ import {
 } from "lucide-react";
 
 import { MiniBars, SignalLine } from "@/components/charts";
-import { architectureLayers, insights, kpis, trends } from "@/lib/mock-data";
+import type { DashboardSnapshot } from "@/lib/dashboard-data";
 
 const iconMap = [Activity, Gauge, Sparkles, ShieldCheck];
 
-export function DashboardOverview() {
+type DashboardOverviewProps = {
+  snapshot: DashboardSnapshot;
+};
+
+export function DashboardOverview({ snapshot }: DashboardOverviewProps) {
+  const {
+    alerts,
+    architectureLayers,
+    comparisons,
+    generatedAt,
+    insights,
+    kpis,
+    qualityScore,
+    source,
+    trends,
+  } = snapshot;
+
   return (
     <div className="dashboard-grid">
       <section className="kpi-grid" aria-label="Indicadores principais">
@@ -49,12 +65,54 @@ export function DashboardOverview() {
       <section className="panel">
         <div className="panel__header">
           <div>
+            <span className="eyebrow">Score</span>
+            <h2>Saúde do produto</h2>
+          </div>
+          <Gauge size={20} aria-hidden />
+        </div>
+        <div className="health-score" aria-label={`Score de qualidade ${qualityScore}%`}>
+          <strong>{qualityScore}%</strong>
+          <span>Índice composto de performance e estabilidade.</span>
+        </div>
+        <div className="data-meta">
+          <span>Fonte: {source}</span>
+          <span>
+            Atualizado:{" "}
+            {new Intl.DateTimeFormat("pt-BR").format(new Date(generatedAt))}
+          </span>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel__header">
+          <div>
             <span className="eyebrow">Adoção</span>
             <h2>Sessões por dia</h2>
           </div>
           <Activity size={20} aria-hidden />
         </div>
         <MiniBars points={trends} metric="sessions" label="Sessões por dia" />
+      </section>
+
+      <section className="panel">
+        <div className="panel__header">
+          <div>
+            <span className="eyebrow">Comparativo</span>
+            <h2>Última janela</h2>
+          </div>
+          <Activity size={20} aria-hidden />
+        </div>
+        <div className="comparison-grid">
+          {comparisons.map((comparison) => (
+            <article key={comparison.label}>
+              <span>{comparison.label}</span>
+              <strong>{comparison.current}</strong>
+              <small>
+                anterior {comparison.previous} · {comparison.delta}
+              </small>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="panel">
@@ -105,10 +163,15 @@ export function DashboardOverview() {
           </div>
           <AlertTriangle size={20} aria-hidden />
         </div>
-        <p>
-          Sem incidentes ativos. O próximo passo de crescimento é trocar os dados
-          mockados por eventos persistidos em uma base analítica.
-        </p>
+        <div className="alert-list">
+          {alerts.map((alert) => (
+            <article className={`alert-item alert-item--${alert.intent}`} key={alert.title}>
+              <strong>{alert.title}</strong>
+              <p>{alert.description}</p>
+              <span>{alert.action}</span>
+            </article>
+          ))}
+        </div>
       </section>
     </div>
   );
