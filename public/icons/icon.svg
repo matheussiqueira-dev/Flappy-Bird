@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Flappy Gestures icon</title>
+  <rect width="512" height="512" rx="96" fill="#111417"/>
+  <circle cx="238" cy="252" r="116" fill="#f1b943" stroke="#ffffff" stroke-width="18"/>
+  <path d="M337 246l72 34-72 39z" fill="#ec6856" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <circle cx="274" cy="218" r="22" fill="#ffffff"/>
+  <circle cx="282" cy="218" r="9" fill="#111417"/>
+  <path d="M170 268c-42 4-71 28-79 66 54 0 94-18 119-54z" fill="#2f9e6d" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M106 104h300" stroke="#3b9dcc" stroke-width="24" stroke-linecap="round"/>
+  <path d="M106 408h300" stroke="#3b9dcc" stroke-width="24" stroke-linecap="round"/>
+</svg>

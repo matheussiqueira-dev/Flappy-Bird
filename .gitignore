@@ -78,12 +78,25 @@ Desktop.ini
 
 # Debug frames export
 debug_frames/
-*.jpg
-*.png
 
 # Logs
 *.log
+*.err
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Temporary files
 *.tmp
 *.temp
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+
+# Local environment variables
+.env*.local

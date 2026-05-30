@@ -1,0 +1,39 @@
+{
+  "name": "flappy-bird-gestos",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Aplicacao web profissional para o projeto Flappy Bird com controle por gestos de Matheus Siqueira.",
+  "author": "Matheus Siqueira <https://www.matheussiqueira.dev>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "verify:browser": "node scripts/verify-browser.mjs"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "lucide-react": "^1.17.0",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
+    "playwright": "^1.60.0",
+    "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "postcss": "8.5.15"
+  }
+}

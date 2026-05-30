@@ -1,5 +1,5 @@
-# Dependências do Flappy Bird com Controle por Gestos
-# Python 3.8+
+# Dependências do Flappy Bird com Controle por Gestos.
+# Recomendado: Python 3.10 a 3.12 para melhor compatibilidade com MediaPipe.
 
 # Motor do jogo
 pygame>=2.5.0
@@ -13,5 +13,5 @@ mediapipe>=0.10.0
 # Operações numéricas
 numpy>=1.24.0
 
-# Tipagem (incluso no Python 3.8+, mas listado para compatibilidade)
+# Tipagem
 typing-extensions>=4.0.0

@@ -1,10 +1,10 @@
 # Assets
 
-Esta pasta contém recursos visuais e de áudio para o jogo.
+Esta pasta é reservada para recursos visuais e sonoros da engine Python original.
 
-## Estrutura planejada
+Estrutura sugerida:
 
-```
+```text
 assets/
 ├── images/
 │   ├── bird.png
@@ -18,7 +18,5 @@ assets/
 └── demo.gif
 ```
 
-## Nota
-
-Atualmente o jogo usa gráficos gerados proceduralmente via Pygame.
-Para adicionar sprites customizados, modifique as funções de desenho em `game_logic.py`.
+No estado atual, a engine Python desenha os elementos proceduralmente via Pygame.
+Os assets web da PWA ficam em `public/`.

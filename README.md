@@ -1,349 +1,224 @@
-# 🐦 Flappy Bird - Controle por Gestos
+# Flappy Bird com Gestos
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg)](https://opencv.org)
-[![MediaPipe](https://img.shields.io/badge/MediaPipe-Hands-orange.svg)](https://mediapipe.dev)
-[![Pygame](https://img.shields.io/badge/Pygame-2.x-red.svg)](https://pygame.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Aplicação profissional de portfólio que une uma engine original em Python para controle por gestos com uma experiência web moderna em Next.js, pronta para deploy na Vercel.
 
-<p align="center">
-  <img src="assets/demo.gif" alt="Demo do Jogo" width="600">
-</p>
+Desenvolvido por [Matheus Siqueira](https://www.matheussiqueira.dev)  
+LinkedIn: [matheussiqueira-dev](https://www.linkedin.com/in/matheussiqueira-dev)
 
-> **Jogue Flappy Bird usando apenas sua mão no ar!** Um projeto interativo que combina visão computacional com gameplay clássico, permitindo controlar o jogo através de gestos captados pela webcam.
+## Visão Geral
 
----
+O projeto original é um Flappy Bird controlado por gestos usando webcam, OpenCV, MediaPipe e Pygame. Esta versão preserva essa engine local e adiciona uma camada web completa para apresentação pública:
 
-## 📖 Índice
+- Landing page profissional
+- Demo jogável em canvas no navegador
+- Dashboard inteligente com KPIs, tendências, alertas e insights
+- Sidebar, topbar, perfil e configurações
+- PWA instalável com service worker e modo offline
+- SEO técnico com sitemap, robots, Open Graph e structured data
+- Vercel Analytics, Speed Insights e Google Analytics opcional
+- Headers de segurança e health check
+- Documentação de arquitetura, execução e deploy
 
-- [Introdução](#-introdução)
-- [Como Funciona](#-como-funciona)
-- [Recursos](#-recursos)
-- [Instalação](#-instalação)
-- [Como Jogar](#-como-jogar)
-- [Modos de Controle](#-modos-de-controle)
-- [Configurações](#-configurações)
-- [Arquitetura](#-arquitetura)
-- [Tecnologias](#-tecnologias)
-- [Contribuição](#-contribuição)
-- [Roadmap](#-roadmap)
-- [Licença](#-licença)
+## Arquitetura
 
----
-
-## 🎯 Introdução
-
-Este projeto reimagina o clássico **Flappy Bird** com uma interface de controle inovadora: **seus gestos**! Usando a webcam do computador e técnicas de visão computacional, o jogo detecta a posição e o estado da sua mão em tempo real, transformando movimentos físicos em comandos do jogo.
-
-### Por que este projeto?
-
-- 🎮 **Interação Natural**: Jogue sem tocar em nenhum dispositivo
-- 🧠 **Tecnologia Moderna**: Demonstra aplicação prática de ML/CV
-- 📚 **Educacional**: Código limpo e bem documentado para aprendizado
-- 🎪 **Demonstração**: Perfeito para apresentações e eventos
-
----
-
-## 🔬 Como Funciona
-
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌────────────┐
-│   Webcam    │────▶│ Hand Tracker │────▶│ Gesture Mapper  │────▶│   Game     │
-│             │     │ (MediaPipe)  │     │ (Interpretação) │     │  (Pygame)  │
-└─────────────┘     └──────────────┘     └─────────────────┘     └────────────┘
-                           │                      │
-                           ▼                      ▼
-                    ┌──────────────┐     ┌─────────────────┐
-                    │ 21 Landmarks │     │ Comando (Pular/ │
-                    │ da Mão       │     │ Posição Y)      │
-                    └──────────────┘     └─────────────────┘
+```text
+Flappy-Bird/
+├── src/
+│   ├── app/                  # Next.js App Router
+│   ├── components/           # UI, dashboard, game canvas e shell
+│   └── lib/                  # Constantes, SEO, analytics e mock data
+├── public/                   # Service worker e ícones PWA
+├── docs/                     # Auditoria técnica
+├── main.py                   # Entrada da aplicação Python original
+├── hand_tracking.py          # Rastreamento de mão com MediaPipe
+├── gesture_mapping.py        # Conversão de gestos em comandos
+├── game_logic.py             # Engine Pygame
+├── config.py                 # Configurações locais
+├── requirements.txt          # Dependências Python
+├── package.json              # Aplicação web
+├── next.config.ts            # Next.js e headers de segurança
+└── vercel.json               # Configuração de deploy Vercel
 ```
 
-1. **Captura de Vídeo**: A webcam captura frames em tempo real
-2. **Detecção de Mão**: MediaPipe Hands identifica 21 pontos (landmarks) da mão
-3. **Filtro Temporal**: Média móvel suaviza as coordenadas, eliminando tremores
-4. **Interpretação de Gesto**: Analisa se a mão está aberta/fechada ou sua altura
-5. **Comando do Jogo**: Traduz gesto em ação (pular ou posicionar pássaro)
-6. **Renderização**: Pygame exibe o jogo com feedback visual em tempo real
+## Stack
 
----
+Web:
 
-## ✨ Recursos
+- Next.js App Router
+- React
+- TypeScript strict
+- Canvas API
+- Vercel Analytics
+- Vercel Speed Insights
+- PWA com service worker
 
-### Gameplay
-- 🎮 Mecânica fiel ao Flappy Bird original
-- 🏆 Sistema de pontuação e high score
-- 🔄 Reinício rápido após game over
+Engine original:
 
-### Controle por Gestos
-- ✋ **Modo Discreto**: Abra a mão para pular, feche para cair
-- 📏 **Modo Contínuo**: A altura da sua mão controla a altura do pássaro
-- 🎯 Filtro temporal para movimentos suaves
-- 🔄 Troca de modo em tempo real (tecla M)
+- Python
+- Pygame
+- OpenCV
+- MediaPipe Hands
+- NumPy
 
-### Debug e Desenvolvimento
-- 📊 Display de FPS e confiança da detecção
-- 👁️ Preview da câmera com landmarks
-- 📤 Exportação de frames para análise
-- 🔧 Configurações centralizadas e fáceis de ajustar
+## Execução Local da Aplicação Web
 
----
-
-## 🚀 Instalação
-
-### Pré-requisitos
-
-- Python 3.8 ou superior
-- Webcam funcional
-- Sistema operacional: Windows, macOS ou Linux
-
-### Passo a Passo
-
-1. **Clone o repositório**
-   ```bash
-   git clone https://github.com/matheussiqueira-dev/Flapy-Bird.git
-   cd Flapy-Bird
-   ```
-
-2. **Crie um ambiente virtual** (recomendado)
-   ```bash
-   python -m venv venv
-   
-   # Windows
-   venv\Scripts\activate
-   
-   # macOS/Linux
-   source venv/bin/activate
-   ```
-
-3. **Instale as dependências**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Execute o jogo**
-   ```bash
-   python main.py
-   ```
-
----
-
-## 🎮 Como Jogar
-
-### Iniciando
-1. Execute `python main.py`
-2. Posicione-se em frente à webcam (distância de 50-100cm)
-3. Levante uma mão para o jogo detectar
-4. **Abra a mão** para iniciar o jogo
-
-### Controles
-
-| Tecla | Ação |
-|-------|------|
-| `M` | Alternar modo de controle |
-| `D` | Toggle modo debug |
-| `C` | Mostrar/ocultar preview da câmera |
-| `P` | Pausar/retomar jogo |
-| `R` | Reiniciar jogo |
-| `ESC` / `Q` | Sair |
-
-### Dicas
-- 🌞 Boa iluminação melhora a detecção
-- 📏 Mantenha a mão a uma distância confortável
-- 🖐️ Use gestos claros e definidos
-- 🎯 No modo contínuo, movimentos suaves são melhores
-
----
-
-## 🕹️ Modos de Controle
-
-### Modo 1: Discreto (Padrão)
-
-```
-    ✋ MÃO ABERTA          ✊ MÃO FECHADA
-    ───────────────       ───────────────
-    │   PULAR!    │       │   Gravidade │
-    │     ⬆️       │       │     ⬇️       │
-    ───────────────       ───────────────
+```bash
+npm install
+npm run dev
 ```
 
-- **Abrir a mão** → Pássaro pula (impulso para cima)
-- **Fechar a mão** → Pássaro cai naturalmente (gravidade)
-- Similar ao controle original com cliques
+Acesse `http://localhost:3000`.
 
-### Modo 2: Contínuo
+Validações recomendadas:
 
-```
-         MÃO ALTA              MÃO BAIXA
-    ┌─────────────────┐   ┌─────────────────┐
-    │       ✋         │   │                 │
-    │      🐦         │   │      🐦         │
-    │                 │   │       ✋         │
-    └─────────────────┘   └─────────────────┘
-         Pássaro alto        Pássaro baixo
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run verify:browser
 ```
 
-- A **altura da mão** controla diretamente a **altura do pássaro**
-- Movimento suave com interpolação
-- Controle mais preciso, mas requer prática
+## Execução Local da Engine Python
 
----
+Recomendado: Python 3.10 a 3.12 para melhor compatibilidade com MediaPipe.
 
-## ⚙️ Configurações
-
-Todas as configurações estão centralizadas em `config.py`:
-
-### Modo de Controle
-```python
-# No arquivo config.py, altere:
-gesture=GestureConfig(
-    control_mode=ControlMode.DISCRETE,  # ou CONTINUOUS
-)
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
 ```
 
-### Física do Jogo
-```python
-game=GameConfig(
-    gravity=0.5,           # Força da gravidade
-    jump_strength=-10.0,   # Força do pulo
-    pipe_gap=180,          # Espaço entre canos
-    pipe_speed=3.0,        # Velocidade dos canos
-)
+Controles principais da versão Python:
+
+- `M`: alternar modo discreto/contínuo
+- `D`: alternar debug
+- `C`: mostrar ou ocultar preview da câmera
+- `P`: pausar
+- `R`: reiniciar
+- `ESC` ou `Q`: sair
+
+## Variáveis de Ambiente
+
+Copie `.env.example` para `.env.local` quando precisar sobrescrever valores públicos.
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://flappy-bird-gestos.vercel.app
+NEXT_PUBLIC_GA_ID=
 ```
 
-### Detecção de Mão
-```python
-hand_tracking=HandTrackingConfig(
-    min_detection_confidence=0.7,  # Confiança mínima
-    smoothing_window_size=5,       # Suavização (anti-jitter)
-)
+`NEXT_PUBLIC_GA_ID` é opcional. Quando definido, o projeto envia eventos também para GA4.
+
+## Deploy na Vercel
+
+O projeto está preparado para deploy zero-config na Vercel.
+
+1. Importe o repositório na Vercel.
+2. Framework preset: Next.js.
+3. Build command: `npm run build`.
+4. Install command: `npm install`.
+5. Configure `NEXT_PUBLIC_SITE_URL` com a URL final do projeto.
+6. Publique.
+
+Também é possível usar a Vercel CLI:
+
+```bash
+npm install -g vercel
+vercel
+vercel --prod
 ```
 
-### Debug
-```python
-debug=DebugConfig(
-    enabled=True,              # Ativar debug
-    show_camera_preview=True,  # Mostrar câmera
-    export_frames=False,       # Salvar frames
-)
-```
+## Rotas Web
 
----
+- `/`: landing page e visão de produto
+- `/play`: demo jogável
+- `/dashboard`: dashboard inteligente
+- `/settings`: perfil e configurações
+- `/about`: página institucional
+- `/api/health`: health check
+- `/offline`: fallback PWA
 
-## 🏗️ Arquitetura
+## SEO, PWA e Observabilidade
 
-```
-Flapy-Bird/
-├── main.py              # 🎯 Ponto de entrada e loop principal
-├── config.py            # ⚙️ Configurações centralizadas
-├── hand_tracking.py     # 📷 Detecção de mão via MediaPipe
-├── gesture_mapping.py   # 🤚 Interpretação de gestos
-├── game_logic.py        # 🎮 Motor do jogo (física, colisões)
-├── requirements.txt     # 📦 Dependências Python
-├── README.md            # 📖 Documentação
-├── demo_script.md       # 🎬 Script de demonstração
-└── assets/              # 🖼️ Recursos (imagens, sons)
-```
+Implementado:
 
-### Diagrama de Classes
+- Metadata centralizada
+- Canonical URLs
+- Open Graph image dinâmica
+- Twitter Card
+- Structured data `SoftwareApplication`
+- `sitemap.xml`
+- `robots.txt`
+- `manifest.webmanifest`
+- Ícones PWA
+- Service worker
+- Página offline
+- Vercel Analytics
+- Vercel Speed Insights
+- Google Analytics opcional
+- Tracking desacoplado em `src/lib/analytics.ts`
 
-```
-┌──────────────────┐
-│  FlappyBirdApp   │ ◄── Loop principal
-└────────┬─────────┘
-         │ usa
-         ▼
-┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-│  HandTracker   │───▶│ GestureMapper  │───▶│ FlappyBirdGame │
-└────────────────┘    └────────────────┘    └────────────────┘
-         │                    │                      │
-         ▼                    ▼                      ▼
-┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-│   HandData     │    │ GestureCommand │    │  Bird, Pipe    │
-│ (landmarks,    │    │ (should_jump,  │    │  (entidades)   │
-│  position)     │    │  target_y)     │    │                │
-└────────────────┘    └────────────────┘    └────────────────┘
-```
+## Segurança
 
----
+Implementado:
 
-## 🛠️ Tecnologias
+- `Content-Security-Policy`
+- `Referrer-Policy`
+- `X-Content-Type-Options`
+- `X-Frame-Options`
+- `Permissions-Policy`
+- Sem credenciais hardcoded
+- Variáveis públicas documentadas
+- Health check sem exposição de dados sensíveis
 
-| Tecnologia | Uso |
-|------------|-----|
-| **Python 3.8+** | Linguagem principal |
-| **OpenCV** | Captura e processamento de vídeo |
-| **MediaPipe** | Detecção de mão (21 landmarks) |
-| **Pygame** | Motor gráfico e loop do jogo |
-| **NumPy** | Operações numéricas e filtros |
+## Dashboard Inteligente
 
-### Por que essas tecnologias?
+O dashboard usa mock data isolado em `src/lib/mock-data.ts`, preparado para futura troca por:
 
-- **MediaPipe**: Modelo pré-treinado de alta performance, roda em CPU
-- **OpenCV**: Padrão da indústria para visão computacional
-- **Pygame**: Simples, eficiente, perfeito para jogos 2D
-- **NumPy**: Essencial para cálculos de filtro temporal
+- Banco de dados analítico
+- Eventos do Vercel Analytics
+- GA4
+- API própria
+- Pipeline de visão computacional
 
----
+Indicadores atuais:
 
-## 🤝 Contribuição
+- Sessões demo
+- FPS médio
+- Confiança gestual
+- Quedas detectadas
+- Tendência de performance
+- Estabilidade
+- Alertas e recomendações
 
-Contribuições são muito bem-vindas! Veja como participar:
+## Auditoria Técnica
 
-1. **Fork** o projeto
-2. Crie uma **branch** para sua feature (`git checkout -b feature/NovaFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add: nova feature'`)
-4. **Push** para a branch (`git push origin feature/NovaFeature`)
-5. Abra um **Pull Request**
+O diagnóstico completo está em [docs/AUDIT.md](docs/AUDIT.md).
 
-### Diretrizes
-- Siga o estilo de código existente
-- Adicione docstrings para novas funções
-- Teste suas alterações antes de submeter
-- Atualize a documentação se necessário
+Resumo dos principais problemas encontrados:
 
----
+- Projeto original não era uma aplicação web
+- Não havia `package.json`, build web, rotas, SEO, PWA ou Vercel config
+- Não havia dashboard, analytics ou observabilidade
+- README anterior tinha problemas de apresentação e link de clone incorreto
+- Configuração de assets podia ser prejudicada pelo `.gitignore`
+- Engine Python dependia de câmera e bibliotecas nativas, sem compatibilidade direta com serverless
 
-## 🗺️ Roadmap
+## Roadmap
 
-### Versão 1.0 (Atual)
-- [x] Controle por gestos (discreto e contínuo)
-- [x] Gameplay básico do Flappy Bird
-- [x] Sistema de pontuação
-- [x] Modo debug
+- Persistir eventos reais em banco analítico
+- Integrar hand tracking no navegador com MediaPipe Tasks Vision
+- Criar leaderboard online
+- Adicionar testes E2E com Playwright
+- Criar pipeline CI/CD com preview deployments
+- Publicar métricas reais de Core Web Vitals
 
-### Versão 1.1 (Planejado)
-- [ ] Efeitos sonoros
-- [ ] Sprites animados do pássaro
-- [ ] Temas visuais (dia/noite)
-- [ ] Medalhas por pontuação
+## Créditos Permanentes
 
-### Versão 2.0 (Futuro)
-- [ ] Modo multiplayer local (2 mãos = 2 pássaros)
-- [ ] Reconhecimento de gestos customizados
-- [ ] Leaderboard online
-- [ ] Suporte a diferentes resoluções
-- [ ] Versão mobile (via câmera do celular)
+Desenvolvido por [Matheus Siqueira](https://www.matheussiqueira.dev).
 
----
+Este crédito faz parte do produto e deve permanecer visível, clicável e integrado ao design em versões futuras.
 
-## 📄 Licença
+## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
-## 👨‍💻 Autor
-
-**Matheus Siqueira**
-- GitHub: [@matheussiqueira-dev](https://github.com/matheussiqueira-dev)
-
----
-
-<p align="center">
-  Feito com ❤️ e ☕ | 2024
-</p>
-
-<p align="center">
-  <a href="#-flappy-bird---controle-por-gestos">⬆️ Voltar ao topo</a>
-</p>
+MIT. Consulte [LICENSE](LICENSE).
