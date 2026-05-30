@@ -30,6 +30,32 @@ export const metadata: Metadata = {
   creator: "Matheus Siqueira",
   publisher: "Matheus Siqueira",
   category: "portfolio",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    title: product.shortName,
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    title: product.name,
+    description: product.description,
+    url: product.siteUrl,
+    siteName: product.name,
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: product.name,
+    description: product.description,
+  },
   keywords: [
     "Flappy Bird",
     "controle por gestos",

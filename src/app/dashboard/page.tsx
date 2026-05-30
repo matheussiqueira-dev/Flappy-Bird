@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { DashboardOverview } from "@/components/dashboard-overview";
+import { getDashboardSnapshot } from "@/lib/dashboard-data";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata(
@@ -9,9 +10,11 @@ export const metadata = createMetadata(
 );
 
 export default function DashboardPage() {
+  const snapshot = getDashboardSnapshot();
+
   return (
     <AppShell title="Dashboard inteligente" eyebrow="Analytics">
-      <DashboardOverview />
+      <DashboardOverview snapshot={snapshot} />
     </AppShell>
   );
 }
