@@ -76,11 +76,14 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const enableVercelInsights =
+    process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
+
   return (
     <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         {children}
-        <AnalyticsProvider />
+        <AnalyticsProvider enableVercelInsights={enableVercelInsights} />
       </body>
     </html>
   );

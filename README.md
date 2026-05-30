@@ -209,6 +209,7 @@ Implementado:
 - Health check com logs estruturados
 - Vercel Analytics e Speed Insights
 - GA4 opcional
+- Vercel Insights ativado apenas no runtime Vercel, evitando erros `/_vercel` em builds locais
 - Error webhook opcional
 - Service worker com cache de navegação e proteção para APIs
 - Auditoria técnica em `docs/AUDIT.md`

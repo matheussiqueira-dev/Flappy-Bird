@@ -64,6 +64,7 @@ A arquitetura atual preserva a engine Python e adiciona uma camada web profissio
 - PWA com manifest, service worker, ícones, atalhos e página offline.
 - SEO com metadata, canonical, Open Graph, Twitter image, sitemap e robots.
 - Analytics com Vercel Analytics, Speed Insights e GA4 opcional.
+- Vercel Analytics e Speed Insights condicionados ao runtime Vercel para evitar ruído de console em `next start` local.
 - Headers de segurança em `next.config.ts`.
 - Ajuste do `.gitignore` para preservar `src/lib` no controle de versão.
 - CI com GitHub Actions para typecheck, lint, build e compile Python.
@@ -107,11 +108,11 @@ Engine Python preservada
 - `npm.cmd run typecheck`
 - `npm.cmd run lint`
 - `npm.cmd run build`
+- `npm.cmd run audit`
+- `npm.cmd run verify:browser` com `APP_URL=http://127.0.0.1:3001`
 
 Validações adicionais recomendadas antes de produção:
 
-- `npm.cmd run audit`
-- `npm.cmd run verify:browser` com servidor local ativo
 - Deploy preview na Vercel
 - Inspeção de logs após o primeiro deploy
 

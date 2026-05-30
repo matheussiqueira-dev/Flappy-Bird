@@ -9,6 +9,10 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const startedAt = Date.now();
   const context = createRequestContext(request, "/api/health");
+  const analyticsStatus =
+    process.env.VERCEL || process.env.NEXT_PUBLIC_GA_ID
+      ? "configured"
+      : "local-disabled";
 
   logServerEvent("info", "request_started", context);
 
@@ -25,7 +29,7 @@ export async function GET(request: Request) {
       checks: {
         web: "ok",
         pwa: "ok",
-        analytics: "configured",
+        analytics: analyticsStatus,
         pythonEngine: "local-only",
       },
     };

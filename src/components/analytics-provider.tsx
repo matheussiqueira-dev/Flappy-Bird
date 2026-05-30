@@ -5,7 +5,11 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 import { useEffect } from "react";
 
-export function AnalyticsProvider() {
+type AnalyticsProviderProps = {
+  enableVercelInsights: boolean;
+};
+
+export function AnalyticsProvider({ enableVercelInsights }: AnalyticsProviderProps) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
@@ -26,8 +30,12 @@ export function AnalyticsProvider() {
           </Script>
         </>
       ) : null}
-      <Analytics />
-      <SpeedInsights />
+      {enableVercelInsights ? (
+        <>
+          <Analytics />
+          <SpeedInsights />
+        </>
+      ) : null}
       <PwaRegistration />
     </>
   );
