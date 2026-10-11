@@ -8,7 +8,8 @@ pygame>=2.5.0
 opencv-python>=4.8.0
 
 # Detecção de mão
-mediapipe>=0.10.0
+# hand_tracking.py usa a API legada mp.solutions, removida a partir da 0.10.30.
+mediapipe>=0.10.0,<0.10.30
 
 # Operações numéricas
 numpy>=1.24.0
