@@ -2,17 +2,26 @@ import type { NextConfig } from "next";
 
 const unsafeEval = process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : "";
 
+// MediaPipe (controle por gestos): o runtime WASM é servido pela própria origem
+// e precisa de 'wasm-unsafe-eval', que libera apenas a compilação de WebAssembly,
+// não eval de JavaScript. O modelo de mão vem do bucket oficial do Google.
+// O MediaPipe também tenta enviar telemetria de uso para odml.pa.googleapis.com,
+// sem opção pública para desligar. Esse host fica de fora de propósito: o CSP
+// bloqueia o envio, o rastreamento continua funcionando e nenhum dado sai do
+// navegador. Efeito colateral: dois erros de CSP no console ao ativar gestos.
+const mediapipeModelOrigin = "https://storage.googleapis.com";
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  `script-src 'self' 'unsafe-inline'${unsafeEval} https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com`,
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${unsafeEval} https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://www.google-analytics.com https://*.vercel-insights.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+  `connect-src 'self' https://www.google-analytics.com https://*.vercel-insights.com https://vitals.vercel-insights.com https://va.vercel-scripts.com ${mediapipeModelOrigin}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join("; ");
@@ -43,6 +52,12 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/mediapipe/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+        ],
       },
       {
         source: "/sw.js",

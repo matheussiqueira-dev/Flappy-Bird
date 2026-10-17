@@ -43,7 +43,7 @@ try {
 
   await page.goto(`${baseUrl}/play`, { waitUntil: "networkidle" });
   await page.waitForTimeout(800);
-  const canvasNonBlank = await page.locator("canvas").evaluate((canvas) => {
+  const canvasNonBlank = await page.locator(".game-canvas").evaluate((canvas) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return false;
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;

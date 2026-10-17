@@ -1,4 +1,4 @@
-const CACHE_NAME = "flappy-gestures-v2";
+const CACHE_NAME = "flappy-gestures-v3";
 const CORE_ASSETS = ["/", "/offline", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -26,7 +26,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/api/") || url.pathname.includes("__nextjs")) {
+  // /mediapipe/ tem ~12 MB de WASM sem hash no nome: fica com o cache HTTP para
+  // não servir um runtime antigo junto de um bundle JS novo.
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/mediapipe/") ||
+    url.pathname.includes("__nextjs")
+  ) {
     return;
   }
 

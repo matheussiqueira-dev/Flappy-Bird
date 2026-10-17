@@ -7,7 +7,7 @@ const runtimeSettings = [
   {
     id: "camera",
     label: "Câmera local",
-    description: "Permissão preparada para futuras versões web com detecção gestual.",
+    description: "Usada só quando você ativa os gestos na demo; o processamento é local.",
     icon: Camera,
   },
   {

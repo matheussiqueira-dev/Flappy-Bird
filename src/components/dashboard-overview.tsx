@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { MiniBars, SignalLine } from "@/components/charts";
+import { SessionInsights } from "@/components/session-insights";
 import type { DashboardSnapshot } from "@/lib/dashboard-data";
 
 const iconMap = [Activity, Gauge, Sparkles, ShieldCheck];
@@ -31,7 +32,17 @@ export function DashboardOverview({ snapshot }: DashboardOverviewProps) {
 
   return (
     <div className="dashboard-grid">
-      <section className="kpi-grid" aria-label="Indicadores principais">
+      <SessionInsights />
+
+      <div className="dataset-note" role="note">
+        <span className="eyebrow">Dataset de amostra</span>
+        <p>
+          Os indicadores abaixo são ilustrativos e servem de contrato para a futura ingestão de
+          eventos reais (<code>GET /api/dashboard</code>, fonte: {source}).
+        </p>
+      </div>
+
+      <section className="kpi-grid" aria-label="Indicadores de amostra">
         {kpis.map((kpi, index) => {
           const Icon = iconMap[index] ?? Activity;
           return (
