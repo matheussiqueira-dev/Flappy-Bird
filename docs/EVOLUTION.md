@@ -37,7 +37,7 @@ Também apareceram bugs menores: o layout de `/play` quebrado (o jogo espremido 
 | Controle por gestos na web | Inexistente | MediaPipe Hand Landmarker no navegador, com GPU/WebGL e fallback para CPU |
 | Física | Por frame (varia com o monitor) | Timestep fixo de 60 Hz com limite anti-travamento |
 | Arquitetura da demo | 1 componente de 430 linhas | Camadas `domain` / `render` / `infrastructure` / `ui` em `src/features` |
-| Testes automatizados | 0 | 39 testes (Vitest) cobrindo engine, gestos, telemetria, env e API |
+| Testes automatizados | 0 | 60 testes unitários (Vitest) + 2 suítes E2E (Playwright), uma delas com câmera falsa |
 | Dados do dashboard | Só simulados, sem rótulo | Telemetria real por navegador + dataset de amostra rotulado |
 | API | Try/catch duplicado, formatos de erro distintos | Handler único com request ID, logs e envelope de erro padrão |
 | Variáveis de ambiente | Lidas cruas, GA ID interpolado num script inline sem validação | Validadas e com fallback seguro |
@@ -127,9 +127,17 @@ O componente `game-demo.tsx` virou uma camada fina, que liga input, engine, rend
 
 ### 3.7 CI/CD
 
-`.github/workflows/quality.yml` foi dividido em dois jobs paralelos. O job **web** (Node 24) roda typecheck, lint, testes, build e auditoria de produção; o job **python** (3.12) compila a engine. Também ganhou `concurrency` para cancelar execuções obsoletas. O `main` não tem branch protection, então a troca de nomes dos jobs não bloqueia merges.
+`.github/workflows/quality.yml` tem três jobs. O **web** (Node 24) roda typecheck, lint, testes, build e auditoria de produção. O **e2e**, que depende do web, sobe o build de produção e roda `verify:browser` e `verify:gestures` (câmera falsa do Chromium). O **python** (3.12) compila a engine. Também ganhou `concurrency` para cancelar execuções obsoletas. O `main` não tem branch protection, então a troca de nomes dos jobs não bloqueia merges.
 
 ---
+
+### 3.8 Segunda fase: modo contínuo, E2E de gestos, preferências e performance
+
+- **Modo "Altura da mão" (P4):** com os gestos ligados, um seletor alterna entre "Abrir e fechar" e "Altura da mão". No segundo, o pássaro segue a altura do centro da mão (pulso e base dos dedos), com a mesma faixa útil (0,2–0,8), zona morta (0,02) e suavização (0,15 por tick) da engine Python. Sem gravidade, só os canos encerram a partida; abrir a mão inicia. O modo é um `ControlMode` do engine, testado como os demais.
+- **E2E de gestos (P6):** `npm run verify:gestures` usa a câmera falsa do Chromium e verifica o pipeline real (câmera, vídeo, WASM, modelo, loop de detecção, overlay na resolução do vídeo, troca de modo e liberação da câmera), os três erros de câmera (permissão negada, sem câmera, contexto sem suporte) e as preferências. O headless shell não tem prompt de permissão real, então os erros são simulados na fronteira do `getUserMedia` com os mesmos nomes de exceção que o Chrome lança.
+- **Preferências reais:** os interruptores de `/settings` eram só visuais. Agora "Controle por gestos" esconde o botão e libera a câmera na hora (inclusive a partir de outra aba), e "Eventos de produto" é um opt-out real: corta Vercel Analytics e Speed Insights (`beforeSend`), GA4 (flag `ga-disable`, lida antes do primeiro page view) e os eventos da demo. "Alertas de performance" saiu, porque não havia nada por trás dele.
+- **Performance com gestos ativos (encontrado pelo E2E):** com WebGL por software (VMs, drivers bloqueados), o delegate GPU do MediaPipe derrubava o jogo de 60 para 3 fps, com travadas de 383 ms. Duas correções: (1) renderizador por software detectado leva direto ao delegate CPU (XNNPACK); (2) um orçamento espaça as inferências conforme o custo medido, para não passarem de 30% da thread principal, descartando as duas primeiras medições (aquecimento). Mesmo ambiente depois: **47–54 fps** com gestos ativos. Com GPU de verdade a inferência é barata e o orçamento não limita nada.
+- **Mensagens de erro:** `NotSupportedError` (página sem HTTPS ou navegador sem suporte) caía em "câmera em uso por outro aplicativo"; agora orienta usar HTTPS.
 
 ## 4. Propostas (não implementadas) com guias táticos
 
@@ -162,17 +170,21 @@ Hoje a telemetria real fica só no navegador de cada pessoa. O próximo passo é
 
 Depende de P2. Uma tabela `scores` com índice em `(score DESC, created_at)`. O cliente envia pontuação e duração. **Validação antitrapaça no servidor:** recusar pontuação incompatível com a duração. Pelo engine, um cano a cada 96 ticks (1,6 s) dá um teto de cerca de `durationMs / 1600 + 1` pontos. Apelido opcional, moderado e limitado a 20 caracteres.
 
-### P4. Modo contínuo (altura da mão)
+### P4. Modo contínuo (altura da mão) — **implementado**
 
-A engine Python tem o modo em que a altura da mão define a altura do pássaro. **Implementação:** adicionar `centerY` ao `HandFrame` (média dos landmarks 0, 5, 9, 13 e 17, como em `_get_hand_center`); criar uma ação `steer(state, targetY)` no engine que interpola `birdY` (o Python usa suavização de 0.15 com zona morta de 0.02); oferecer um seletor de modo na UI. Os testes seguem o padrão dos já existentes.
+Ver seção 3.8.
 
 ### P5. CSP com nonce (remover `'unsafe-inline'`)
 
 O `script-src` ainda tem `'unsafe-inline'`, necessário para os scripts inline do Next e do GA4. **Implementação:** gerar um nonce por requisição em `proxy.ts` (no Next 16, `middleware.ts` virou `proxy.ts`) e repassá-lo via header `x-nonce` ao `<Script nonce>`. **Trade-off:** páginas com nonce viram dinâmicas e perdem a renderização estática, então vale medir o impacto no TTFB antes de adotar.
 
-### P6. Testes E2E de gestos com câmera falsa
+### P6. Testes E2E de gestos com câmera falsa — **implementado**
 
-Hoje o fluxo de gestos foi verificado até o carregamento do modelo (grafo do MediaPipe iniciado na GPU), mas não com a mão de verdade, porque o navegador de verificação bloqueia câmera. **Implementação:** Playwright com `--use-fake-device-for-media-stream --use-file-for-fake-video-capture=mao.y4m`, gravando um vídeo curto de mão abrindo e fechando, e checando que o status vira "Jogando" sem clique.
+Ver seção 3.8. Falta só um vídeo real de mão (`--use-file-for-fake-video-capture=mao.y4m`) para cobrir também o reconhecimento da pose ponta a ponta. Hoje esse reconhecimento é coberto pelos testes unitários com landmarks sintéticos.
+
+### P9. Inferência num Web Worker
+
+`detectForVideo` roda na thread principal. O orçamento de detecção (seção 3.8) mantém o jogo fluido, mas em máquinas sem GPU ainda sobram travadas de cerca de 100 ms a cada inferência. **Implementação:** mover o `HandLandmarker` para um Worker, enviar quadros com `createImageBitmap(video)` (transferível, sem cópia) e devolver só os 21 landmarks. O delegate GPU no Worker precisa de `OffscreenCanvas`, então convém manter o fallback para CPU. **Justificativa:** com a thread principal livre, o jogo fica estável a 60 fps em qualquer máquina.
 
 ### P7. Engine Python
 
@@ -318,11 +330,13 @@ export const POST = createRouteHandler("/api/events", async (request) => {
 |-------------|-----------|
 | `npm run typecheck` | Sem erros |
 | `npm run lint` (ESLint + regras do React Compiler) | Sem erros |
-| `npm test` | 39 testes passando (4 arquivos) |
+| `npm test` | 60 testes passando (6 arquivos) |
 | `npm run build` (produção) | Sucesso; 14 rotas (12 estáticas, 2 dinâmicas) |
 | `npm run verify:browser` (Playwright, contra `next start`) | 5 rotas sem overflow e sem erro de console; `/api/health` e `/api/dashboard` OK; canvas renderizando; Flap inicia a partida; dashboard mobile sem overflow |
 | Teste manual no navegador integrado (build de produção) | Partida completa até o game over; sessão gravada e exibida no dashboard; tendência e gráfico corretos com 12 partidas; "Limpar dados" volta ao estado vazio; layout mobile do jogo |
-| Gestos | WASM e modelo carregam sem bloqueio de CSP e o grafo do MediaPipe inicia na GPU (WebGL 2). Câmera negada mostra o erro correto e restaura a UI. **Não verificado:** rastreamento com uma mão real, porque o navegador de verificação bloqueia a câmera (ver P6). |
+| `npm run verify:gestures` (Playwright, câmera falsa) | 15/15: pipeline real de câmera e modelo, loop de detecção, overlay, modo altura da mão, liberação da câmera, três erros de câmera e preferências |
+| Performance com gestos (WebGL por software) | Jogo a 47–54 fps (antes: 3 fps); detecção a 4–6 fps nesse ambiente |
+| Gestos com mão real | **Não verificado:** a câmera falsa gera um padrão sintético, sem mão. O reconhecimento da pose é coberto pelos testes unitários. |
 | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Headers | `X-Request-Id` propagado, `no-store` na API, CSP com `wasm-unsafe-eval`, WASM com `Content-Type: application/wasm` e cache de 1 dia |
 
@@ -338,10 +352,10 @@ Uma segunda passada de revisão e testes encontrou e corrigiu:
 
 ## 7. Limitações conhecidas
 
-- O controle por gestos precisa ser testado com uma câmera real antes de uma demo ao vivo.
+- O reconhecimento com uma mão real precisa ser testado com câmera de verdade antes de uma demo ao vivo.
+- Em máquinas sem GPU ainda há travadas de cerca de 100 ms durante a inferência (ver P9).
 - Ao ativar os gestos, o console mostra dois erros de CSP da telemetria do Google bloqueada. É esperado e não afeta o funcionamento.
 - A telemetria real é por navegador; o agregado entre usuários depende de P2.
 - Os KPIs de amostra do dashboard continuam simulados, agora rotulados como tal.
 - O `'unsafe-inline'` no CSP continua (ver P5).
-- Os interruptores da página de configurações são visuais: não alteram câmera, analytics nem alertas. Ou se conectam ao comportamento real, ou deveriam sair da interface.
 - A engine Python só recebeu a fixação de versão do MediaPipe (ver P7).

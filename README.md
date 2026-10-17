@@ -13,7 +13,8 @@ Principais entregas:
 
 - Landing page responsiva com identidade visual própria
 - Demo jogável em Canvas no navegador, com física em timestep fixo (mesma velocidade em 60 Hz, 144 Hz ou com quedas de FPS)
-- Controle por gestos direto no navegador com MediaPipe Hand Landmarker: feche e abra a mão para voar, sem instalar nada e sem enviar imagens para servidor
+- Controle por gestos direto no navegador com MediaPipe Hand Landmarker, em dois modos: "Abrir e fechar" (cada abertura da mão é um flap) e "Altura da mão" (o pássaro acompanha a mão). Sem instalar nada e sem enviar imagens para servidor
+- Preferências reais em `/settings`: desligar o controle por gestos e opt-out de analytics (Vercel Analytics, Speed Insights e GA4)
 - Telemetria real de partidas no dashboard (pontuação, duração, input usado), separada do dataset de amostra
 - Dashboard inteligente com KPIs, tendências, comparativos, alertas e insights
 - API versionada para dados do dashboard
@@ -129,7 +130,7 @@ npm run verify
 npm run audit
 ```
 
-`npm run verify:browser` roda a verificação ponta a ponta com Playwright contra um servidor já iniciado (`APP_URL`, padrão `http://127.0.0.1:3000`). Na primeira vez, instale o navegador com `npx playwright install --only-shell chromium`.
+`npm run verify:browser` e `npm run verify:gestures` rodam as verificações ponta a ponta com Playwright contra um servidor já iniciado (`APP_URL`, padrão `http://127.0.0.1:3000`). Na primeira vez, instale o navegador com `npx playwright install --only-shell chromium`. O `verify:gestures` usa a câmera falsa do Chromium para testar câmera, modelo e detecção sem webcam.
 
 O controle por gestos precisa de HTTPS ou `localhost` (exigência do navegador para câmera). O runtime WASM do MediaPipe é copiado para `public/mediapipe/` automaticamente antes de `dev` e `build`; o modelo de mão (~7,8 MB) é baixado do bucket oficial do Google só quando o usuário ativa os gestos.
 
@@ -244,7 +245,7 @@ Implementado:
 - Persistir eventos reais em banco analítico
 - Criar leaderboard online
 - Adicionar testes E2E completos com Playwright
-- Modo contínuo (altura da mão) na demo web
+- Inferência do hand tracking num Web Worker
 - Ver roadmap detalhado em [docs/EVOLUTION.md](docs/EVOLUTION.md)
 - Exportar eventos de analytics para warehouse
 - Adicionar error tracking dedicado via Sentry, Datadog ou similar
