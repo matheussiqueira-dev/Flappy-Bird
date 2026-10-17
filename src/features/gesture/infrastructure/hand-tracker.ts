@@ -1,6 +1,7 @@
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 
 import { classifyHand, type HandPose, type Landmark } from "../domain/hand-pose";
+import { DetectionBudget } from "./detection-budget";
 
 /** Arquivos WASM copiados de `@mediapipe/tasks-vision` por `scripts/copy-mediapipe-wasm.mjs`. */
 const WASM_BASE_PATH = "/mediapipe/wasm";
@@ -132,23 +133,28 @@ export async function startHandTracker({
   let lastVideoTime = -1;
   let lastDetectionAt = 0;
   let detectionFps = 0;
+  const budget = new DetectionBudget();
 
   const loop = () => {
     if (stopped) return;
 
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime !== lastVideoTime) {
+    const now = performance.now();
+    const hasNewFrame =
+      video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime !== lastVideoTime;
+
+    if (hasNewFrame && budget.shouldRun(now)) {
       lastVideoTime = video.currentTime;
-      const now = performance.now();
 
       if (lastDetectionAt > 0) {
         const instantFps = 1000 / Math.max(1, now - lastDetectionAt);
-        detectionFps = detectionFps === 0 ? instantFps : detectionFps * 0.9 + instantFps * 0.1;
+        detectionFps = detectionFps === 0 ? instantFps : detectionFps * 0.75 + instantFps * 0.25;
       }
       lastDetectionAt = now;
 
       let result: ReturnType<HandLandmarker["detectForVideo"]>;
       try {
         result = landmarker.detectForVideo(video, now);
+        budget.record(now, performance.now() - now);
       } catch (error) {
         // Sem isso, uma exceção aqui mataria o loop em silêncio com a câmera ligada.
         fail(new HandTrackerError("model-failed", "O rastreamento da mão parou de funcionar.", { cause: error }));
@@ -188,11 +194,30 @@ async function createLandmarker(): Promise<HandLandmarker> {
       minTrackingConfidence: 0.5,
     });
 
-  // GPU (WebGL) é bem mais rápido, mas falha em alguns drivers e VMs.
+  // GPU (WebGL) é bem mais rápido com aceleração de verdade. Com WebGL por
+  // software (VMs, drivers bloqueados) o delegate GPU fica até 100x mais lento
+  // que a CPU, então nesses casos a CPU (XNNPACK + SIMD) vai direto.
+  if (hasSoftwareWebGl()) return create("CPU");
+
   try {
     return await create("GPU");
   } catch {
     return await create("CPU");
+  }
+}
+
+const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software|basic render/i;
+
+function hasSoftwareWebGl(): boolean {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2");
+    if (!gl) return true;
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "";
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return SOFTWARE_RENDERER.test(renderer);
+  } catch {
+    return true;
   }
 }
 
@@ -219,6 +244,15 @@ function toCameraError(error: unknown): HandTrackerError {
     return new HandTrackerError(
       "permission-denied",
       "Permissão de câmera negada. Libere o acesso nas configurações do navegador.",
+      { cause: error },
+    );
+  }
+
+  // Contexto inseguro (HTTP fora de localhost) ou navegador sem suporte.
+  if (name === "NotSupportedError" || error instanceof TypeError) {
+    return new HandTrackerError(
+      "unsupported",
+      "Este navegador ou página não permite usar a câmera. Use HTTPS e um navegador atualizado.",
       { cause: error },
     );
   }
