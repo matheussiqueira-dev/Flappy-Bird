@@ -12,7 +12,9 @@ O projeto original é uma engine desktop em Python com Pygame, OpenCV e MediaPip
 Principais entregas:
 
 - Landing page responsiva com identidade visual própria
-- Demo jogável em Canvas no navegador
+- Demo jogável em Canvas no navegador, com física em timestep fixo (mesma velocidade em 60 Hz, 144 Hz ou com quedas de FPS)
+- Controle por gestos direto no navegador com MediaPipe Hand Landmarker: feche e abra a mão para voar, sem instalar nada e sem enviar imagens para servidor
+- Telemetria real de partidas no dashboard (pontuação, duração, input usado), separada do dataset de amostra
 - Dashboard inteligente com KPIs, tendências, comparativos, alertas e insights
 - API versionada para dados do dashboard
 - Perfil, configurações, página institucional, sidebar, topbar e rodapé
@@ -30,12 +32,21 @@ Usuário
   -> Analytics Provider
   -> Vercel Analytics, Speed Insights e GA4 opcional
 
+Demo web (src/features)
+  -> game/domain       engine puro e testável (física, colisão, eventos)
+  -> game/render       renderer canvas 2D
+  -> gesture/domain    classificação de pose e mapeamento gesto -> flap
+  -> gesture/infra     câmera + MediaPipe Tasks Vision (WASM servido pela própria origem)
+  -> telemetry         repositório validado de sessões + agregações
+
 Dashboard
   -> src/lib/dashboard-data.ts
   -> /api/dashboard
   -> Componentes analíticos desacoplados
 
 Observabilidade
+  -> src/lib/http/route-handler.ts (request ID, logs, envelope de erro)
+  -> src/lib/env.ts (variáveis validadas)
   -> src/lib/observability.ts
   -> /api/health
   -> logs estruturados
@@ -57,6 +68,8 @@ Web:
 - React
 - TypeScript strict
 - Canvas API
+- MediaPipe Tasks Vision (hand tracking no navegador)
+- Vitest
 - Lucide React
 - Vercel Analytics
 - Vercel Speed Insights
@@ -76,12 +89,17 @@ Engine local:
 src/
   app/                    Rotas, metadata, APIs, manifest, sitemap e páginas
   components/             Shell, dashboard, demo canvas, gráficos e UI
-  lib/                    Constantes, SEO, analytics, dados e observabilidade
+  features/               Domínio da demo: game, gesture e telemetry (com testes)
+  lib/                    Constantes, SEO, analytics, env, HTTP, dados e observabilidade
 public/
   icons/                  Ícones PWA
   sw.js                   Service worker
 docs/
   AUDIT.md                Diagnóstico técnico e decisões
+  EVOLUTION.md            Documento master de evolução (arquitetura, produto e roadmap)
+scripts/
+  copy-mediapipe-wasm.mjs Copia o runtime WASM do MediaPipe para public/ (predev/prebuild)
+  verify-browser.mjs      Verificação ponta a ponta com Playwright
 .github/workflows/
   quality.yml             Quality gate para GitHub
 main.py                   Entrada da engine Python
@@ -105,10 +123,15 @@ Validações recomendadas:
 ```bash
 npm run typecheck
 npm run lint
+npm test
 npm run build
 npm run verify
 npm run audit
 ```
+
+`npm run verify:browser` roda a verificação ponta a ponta com Playwright contra um servidor já iniciado (`APP_URL`, padrão `http://127.0.0.1:3000`). Na primeira vez, instale o navegador com `npx playwright install --only-shell chromium`.
+
+O controle por gestos precisa de HTTPS ou `localhost` (exigência do navegador para câmera). O runtime WASM do MediaPipe é copiado para `public/mediapipe/` automaticamente antes de `dev` e `build`; o modelo de mão (~7,8 MB) é baixado do bucket oficial do Google só quando o usuário ativa os gestos.
 
 Em PowerShell com política restritiva, use `npm.cmd`:
 
@@ -118,7 +141,9 @@ npm.cmd run build
 
 ## Execução da Engine Python
 
-Recomendado: Python 3.10 a 3.12 para melhor compatibilidade com MediaPipe.
+Recomendado: Python 3.10 a 3.12. O `requirements.txt` fixa `mediapipe<0.10.30`, porque versões mais novas removeram a API `mp.solutions` usada pela engine.
+
+No Windows, o MediaPipe não carrega os próprios modelos quando o caminho do ambiente virtual tem acentos (por exemplo, `Programação`). Nesse caso, crie o venv num caminho só com ASCII, como `C:\Users\voce\.venvs\flappy-bird`.
 
 ```bash
 python -m venv .venv
@@ -217,9 +242,10 @@ Implementado:
 ## Roadmap Futuro
 
 - Persistir eventos reais em banco analítico
-- Integrar MediaPipe Tasks Vision no navegador
 - Criar leaderboard online
 - Adicionar testes E2E completos com Playwright
+- Modo contínuo (altura da mão) na demo web
+- Ver roadmap detalhado em [docs/EVOLUTION.md](docs/EVOLUTION.md)
 - Exportar eventos de analytics para warehouse
 - Adicionar error tracking dedicado via Sentry, Datadog ou similar
 

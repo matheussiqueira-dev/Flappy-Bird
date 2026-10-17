@@ -6,9 +6,13 @@ on:
     branches:
       - main
 
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
-    name: Validate web and Python surfaces
+  web:
+    name: Validate web surface
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,10 +24,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
-      - name: Install web dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Typecheck
@@ -32,13 +36,29 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Unit tests
+        run: npm test
+
       - name: Build
         run: npm run build
+
+      - name: Audit production dependencies
+        run: npm run audit
+
+  python:
+    name: Validate Python engine
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Compile Python engine
         run: python -m py_compile config.py game_logic.py gesture_mapping.py hand_tracking.py main.py
