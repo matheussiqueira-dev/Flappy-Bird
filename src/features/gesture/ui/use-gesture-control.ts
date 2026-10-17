@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GestureMapper } from "../domain/gesture-mapper";
 import type { HandPose, Landmark } from "../domain/hand-pose";
+import { HandSteering, handCenterY } from "../domain/hand-steering";
 import {
   HandTrackerError,
   startHandTracker,
@@ -40,6 +41,8 @@ const HAND_CONNECTIONS: ReadonlyArray<readonly [number, number]> = [
 
 type UseGestureControlOptions = {
   onFlap: () => void;
+  /** Alvo de altura (0 = topo, 1 = chão) a cada frame com a mão visível. */
+  onSteer?: (target: number) => void;
 };
 
 /**
@@ -47,18 +50,21 @@ type UseGestureControlOptions = {
  * do React: só mudanças de pose e o FPS (throttled) disparam re-render, e o
  * esqueleto da mão é desenhado direto no canvas de overlay.
  */
-export function useGestureControl({ onFlap }: UseGestureControlOptions) {
+export function useGestureControl({ onFlap, onSteer }: UseGestureControlOptions) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const sessionRef = useRef<HandTrackerSession | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const mapperRef = useRef(new GestureMapper());
+  const steeringRef = useRef(new HandSteering());
   const onFlapRef = useRef(onFlap);
+  const onSteerRef = useRef(onSteer);
   const [state, setState] = useState<GestureUiState>(INITIAL_STATE);
 
   useEffect(() => {
     onFlapRef.current = onFlap;
-  }, [onFlap]);
+    onSteerRef.current = onSteer;
+  }, [onFlap, onSteer]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -66,6 +72,7 @@ export function useGestureControl({ onFlap }: UseGestureControlOptions) {
     sessionRef.current?.stop();
     sessionRef.current = null;
     mapperRef.current.reset();
+    steeringRef.current.reset();
     clearOverlay(overlayRef.current);
     setState(INITIAL_STATE);
   }, []);
@@ -77,6 +84,7 @@ export function useGestureControl({ onFlap }: UseGestureControlOptions) {
     const controller = new AbortController();
     abortRef.current = controller;
     mapperRef.current.reset();
+    steeringRef.current.reset();
     setState({ ...INITIAL_STATE, status: "loading" });
 
     let lastPose: HandPose | null = null;
@@ -88,6 +96,11 @@ export function useGestureControl({ onFlap }: UseGestureControlOptions) {
         timestampMs: frame.timestampMs,
       });
       if (shouldFlap) onFlapRef.current();
+
+      if (frame.landmarks && onSteerRef.current) {
+        const target = steeringRef.current.update(handCenterY(frame.landmarks));
+        if (target !== null) onSteerRef.current(target);
+      }
 
       drawHand(overlayRef.current, video, frame.landmarks, frame.pose);
 
@@ -107,6 +120,7 @@ export function useGestureControl({ onFlap }: UseGestureControlOptions) {
       abortRef.current = null;
       sessionRef.current = null;
       mapperRef.current.reset();
+      steeringRef.current.reset();
       clearOverlay(overlayRef.current);
       setState({ ...INITIAL_STATE, status: "error", errorMessage: error.message });
     };

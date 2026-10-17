@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_GAME_CONFIG as config } from "./config";
-import { advance, createGame, detectCollision, flap, startGame, stepTick, togglePause } from "./engine";
+import {
+  advance,
+  createGame,
+  detectCollision,
+  flap,
+  setControlMode,
+  setSteerTarget,
+  startGame,
+  stepTick,
+  togglePause,
+} from "./engine";
 
 describe("engine", () => {
   it("cria o jogo parado, com recorde saneado", () => {
@@ -129,5 +139,77 @@ describe("engine", () => {
     expect(state.highScore).toBe(7);
     expect(state.score).toBe(0);
     expect(state.flaps.gesture).toBe(0);
+  });
+});
+
+describe("engine: modo steer (altura da mão)", () => {
+  const playingSteer = () => {
+    const state = createGame();
+    setControlMode(state, "steer");
+    startGame(state);
+    // Um cano muito distante impede o spawn (que ocorre com a lista vazia) e
+    // isola a física vertical do teste.
+    state.pipes = [{ x: 1_000_000, gapY: config.height / 2, passed: false }];
+    state.spawnTimer = -10_000;
+    return state;
+  };
+
+  it("troca de modo reinicia a partida e preserva o recorde", () => {
+    const state = createGame(9);
+    flap(state, "pointer");
+
+    setControlMode(state, "steer");
+
+    expect(state.controlMode).toBe("steer");
+    expect(state.status).toBe("ready");
+    expect(state.highScore).toBe(9);
+  });
+
+  it("o pássaro converge para o alvo sem gravidade", () => {
+    const state = playingSteer();
+    setSteerTarget(state, 0);
+
+    for (let i = 0; i < 120; i += 1) stepTick(state);
+
+    expect(state.status).toBe("playing");
+    expect(state.birdY).toBeCloseTo(config.birdRadius + config.steerMarginPx, 0);
+  });
+
+  it("nunca encosta no chão mesmo com o alvo no limite inferior", () => {
+    const state = playingSteer();
+    setSteerTarget(state, 1);
+
+    for (let i = 0; i < 300; i += 1) stepTick(state);
+
+    expect(state.status).toBe("playing");
+    expect(state.birdY + config.birdRadius).toBeLessThan(config.height - config.groundHeight);
+  });
+
+  it("flap só inicia a partida, sem impulso", () => {
+    const state = createGame();
+    setControlMode(state, "steer");
+
+    const events = flap(state, "gesture");
+
+    expect(events.map((event) => event.type)).toEqual(["started"]);
+    expect(state.birdVelocity).toBe(0);
+  });
+
+  it("satura e ignora alvos inválidos", () => {
+    const state = createGame();
+    setSteerTarget(state, 3);
+    expect(state.steerTarget).toBe(1);
+    setSteerTarget(state, Number.NaN);
+    expect(state.steerTarget).toBe(1);
+  });
+
+  it("reiniciar mantém o modo e o alvo", () => {
+    const state = playingSteer();
+    setSteerTarget(state, 0.2);
+
+    startGame(state);
+
+    expect(state.controlMode).toBe("steer");
+    expect(state.steerTarget).toBe(0.2);
   });
 });

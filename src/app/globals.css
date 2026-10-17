@@ -466,7 +466,13 @@ button {
 .gesture-badge {
   position: absolute;
   left: 6px;
+  right: 6px;
   bottom: 6px;
+  width: fit-content;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 3px 8px;
   border-radius: 999px;
   background: rgba(17, 20, 23, 0.78);
@@ -482,6 +488,34 @@ button {
 
 .gesture-badge--closed {
   background: rgba(150, 101, 12, 0.92);
+}
+
+.mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px;
+  background: #f9fbfa;
+}
+
+.mode-switch__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mode-switch__option--active {
+  border-color: var(--leaf);
+  background: #eef8f3;
+  color: #17694a;
 }
 
 .gesture-status {
@@ -845,6 +879,12 @@ button {
   padding-left: 22px;
   color: #28333b;
   line-height: 1.55;
+}
+
+.settings-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .panel__header {
@@ -1406,4 +1446,23 @@ button {
   .layer-table em {
     justify-self: start;
   }
+
+  /* No celular o preview vai para o canto superior direito, longe do texto
+     central do overlay; o placar do jogo ocupa o canto esquerdo. */
+  .gesture-preview {
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    width: 30%;
+  }
+
+  .gesture-badge {
+    font-size: 0.62rem;
+  }
+}
+
+.gesture-status a {
+  color: #17694a;
+  font-weight: 700;
+  text-decoration: underline;
 }

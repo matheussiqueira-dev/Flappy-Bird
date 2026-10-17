@@ -18,6 +18,8 @@ export const DEFAULT_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
   pipeSpeed: 3.1,
   pipeSpawnInterval: 96,
   pipeGapMargin: 110,
+  steerSmoothing: 0.15,
+  steerMarginPx: 4,
   tickMs: 1000 / 60,
   maxTicksPerFrame: 5,
 });

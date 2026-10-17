@@ -2,6 +2,13 @@ export type GameStatus = "ready" | "playing" | "paused" | "game-over";
 
 export type InputSource = "pointer" | "keyboard" | "gesture";
 
+/**
+ * `flap`: gravidade + impulso, o Flappy Bird clássico.
+ * `steer`: a altura do pássaro segue um alvo (a altura da mão), como o modo
+ * contínuo da engine Python. Sem gravidade, então só os canos encerram a partida.
+ */
+export type ControlMode = "flap" | "steer";
+
 export type Pipe = {
   x: number;
   gapY: number;
@@ -27,6 +34,10 @@ export type GameConfig = {
   pipeSpawnInterval: number;
   /** Margem mínima entre o centro do vão e as bordas jogáveis. */
   pipeGapMargin: number;
+  /** Fração da distância até o alvo percorrida por tick no modo `steer`. */
+  steerSmoothing: number;
+  /** Folga entre o pássaro e o teto/chão no modo `steer`, em px. */
+  steerMarginPx: number;
   /** Duração fixa de um tick de simulação, em ms. */
   tickMs: number;
   /** Limite de ticks por frame para evitar a "espiral da morte" após travamentos. */
@@ -35,6 +46,9 @@ export type GameConfig = {
 
 export type GameState = {
   status: GameStatus;
+  controlMode: ControlMode;
+  /** Alvo normalizado (0 = topo, 1 = chão) usado no modo `steer`. */
+  steerTarget: number;
   birdY: number;
   birdVelocity: number;
   pipes: Pipe[];

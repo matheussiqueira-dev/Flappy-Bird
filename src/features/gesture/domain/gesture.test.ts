@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { GestureMapper } from "./gesture-mapper";
 import { classifyHand, type Landmark } from "./hand-pose";
+import { HandSteering, handCenterY } from "./hand-steering";
 
 /**
  * Mão sintética vertical: pulso em (0.5, 0.9); para cada dedo, a articulação
@@ -91,5 +92,36 @@ describe("GestureMapper", () => {
     mapper.update({ pose: "closed", timestampMs: 0 });
     mapper.reset();
     expect(mapper.update({ pose: "open", timestampMs: 1000 }).shouldFlap).toBe(false);
+  });
+});
+
+describe("HandSteering", () => {
+  it("mapeia a faixa útil 0,2–0,8 para 0–1 e satura fora dela", () => {
+    expect(new HandSteering().update(0.2)).toBe(0);
+    expect(new HandSteering().update(0.5)).toBeCloseTo(0.5);
+    expect(new HandSteering().update(0.8)).toBe(1);
+    expect(new HandSteering().update(0.05)).toBe(0);
+    expect(new HandSteering().update(0.95)).toBe(1);
+  });
+
+  it("zona morta segura o alvo contra tremor", () => {
+    const steering = new HandSteering();
+    steering.update(0.5);
+    expect(steering.update(0.505)).toBeCloseTo(0.5);
+    expect(steering.update(0.56)).toBeCloseTo(0.6);
+  });
+
+  it("mão fora de cena mantém o último alvo", () => {
+    const steering = new HandSteering();
+    expect(steering.update(null)).toBeNull();
+    steering.update(0.35);
+    expect(steering.update(null)).toBeCloseTo(0.25);
+  });
+
+  it("calcula o centro pela base da mão", () => {
+    const hand = syntheticHand([true, true, true, true]);
+    // Pulso em 0,9 e bases (MCP) também em 0,9 na mão sintética.
+    expect(handCenterY(hand)).toBeCloseTo(0.9);
+    expect(handCenterY([{ x: 0, y: 0 }])).toBeNull();
   });
 });

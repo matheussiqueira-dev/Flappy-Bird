@@ -2,6 +2,8 @@
 
 import { track } from "@vercel/analytics";
 
+import { getPreferencesStore } from "@/features/preferences/preferences-store";
+
 type AnalyticsValue = string | number | boolean | null | undefined;
 type AnalyticsPayload = Record<string, AnalyticsValue>;
 
@@ -19,6 +21,8 @@ export function trackProductEvent(
   eventName: string,
   payload: AnalyticsPayload = {},
 ) {
+  if (!getPreferencesStore().get().analytics) return;
+
   track(eventName, payload);
 
   if (typeof window !== "undefined" && window.gtag) {

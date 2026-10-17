@@ -1,5 +1,12 @@
 import { DEFAULT_GAME_CONFIG } from "./config";
-import type { GameConfig, GameEvent, GameState, InputSource, Pipe } from "./types";
+import type {
+  ControlMode,
+  GameConfig,
+  GameEvent,
+  GameState,
+  InputSource,
+  Pipe,
+} from "./types";
 
 /**
  * Núcleo de simulação sem dependência de DOM, React ou canvas.
@@ -15,9 +22,12 @@ const TICK_EPSILON_MS = 1e-6;
 export function createGame(
   highScore = 0,
   config: GameConfig = DEFAULT_GAME_CONFIG,
+  controlMode: ControlMode = "flap",
 ): GameState {
   return {
     status: "ready",
+    controlMode,
+    steerTarget: 0.5,
     birdY: config.height * 0.45,
     birdVelocity: 0,
     pipes: [],
@@ -35,9 +45,10 @@ export function startGame(
   state: GameState,
   config: GameConfig = DEFAULT_GAME_CONFIG,
 ): GameEvent[] {
-  Object.assign(state, createGame(state.highScore, config), {
+  Object.assign(state, createGame(state.highScore, config, state.controlMode), {
     status: "playing",
     tick: state.tick,
+    steerTarget: state.steerTarget,
   });
 
   return [{ type: "started" }];
@@ -58,7 +69,8 @@ export function flap(
     events.push(...startGame(state, config));
   }
 
-  if (state.status !== "playing") {
+  // No modo steer o flap só inicia a partida; quem move o pássaro é o alvo.
+  if (state.status !== "playing" || state.controlMode === "steer") {
     return events;
   }
 
@@ -67,6 +79,22 @@ export function flap(
   events.push({ type: "flapped", source });
 
   return events;
+}
+
+/** Troca o modo de controle e devolve a partida ao estado inicial. */
+export function setControlMode(
+  state: GameState,
+  mode: ControlMode,
+  config: GameConfig = DEFAULT_GAME_CONFIG,
+): void {
+  if (state.controlMode === mode) return;
+  Object.assign(state, createGame(state.highScore, config, mode), { tick: state.tick });
+}
+
+/** Define o alvo do modo `steer`, normalizado entre 0 (topo) e 1 (chão). */
+export function setSteerTarget(state: GameState, normalized: number): void {
+  if (!Number.isFinite(normalized)) return;
+  state.steerTarget = Math.min(1, Math.max(0, normalized));
 }
 
 export function togglePause(state: GameState): void {
@@ -121,8 +149,12 @@ export function stepTick(
 
   state.elapsedMs += config.tickMs;
   state.spawnTimer += 1;
-  state.birdVelocity = Math.min(state.birdVelocity + config.gravity, config.maxFallSpeed);
-  state.birdY += state.birdVelocity;
+  if (state.controlMode === "steer") {
+    steerBird(state, config);
+  } else {
+    state.birdVelocity = Math.min(state.birdVelocity + config.gravity, config.maxFallSpeed);
+    state.birdY += state.birdVelocity;
+  }
 
   if (state.pipes.length === 0 || state.spawnTimer > config.pipeSpawnInterval) {
     state.pipes.push(spawnPipe(state.tick, config));
@@ -183,6 +215,17 @@ export function detectCollision(
 
 export function totalFlaps(state: Pick<GameState, "flaps">): number {
   return state.flaps.pointer + state.flaps.keyboard + state.flaps.gesture;
+}
+
+function steerBird(state: GameState, config: GameConfig) {
+  const top = config.birdRadius + config.steerMarginPx;
+  const bottom = config.height - config.groundHeight - config.birdRadius - config.steerMarginPx;
+  const targetY = top + state.steerTarget * (bottom - top);
+  const previousY = state.birdY;
+
+  state.birdY += (targetY - state.birdY) * config.steerSmoothing;
+  // Velocidade aparente: o renderer usa para inclinar o pássaro.
+  state.birdVelocity = state.birdY - previousY;
 }
 
 function spawnPipe(tick: number, config: GameConfig): Pipe {

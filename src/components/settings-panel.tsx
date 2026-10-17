@@ -1,35 +1,37 @@
 "use client";
 
-import { Bell, Camera, Gauge, ShieldCheck, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { Camera, Gauge, ShieldCheck, SlidersHorizontal } from "lucide-react";
 
-const runtimeSettings = [
+import {
+  getPreferencesStore,
+  type Preferences,
+} from "@/features/preferences/preferences-store";
+import { usePreferences } from "@/features/preferences/use-preferences";
+
+const runtimeSettings: Array<{
+  id: keyof Preferences;
+  label: string;
+  description: string;
+  icon: typeof Camera;
+}> = [
   {
-    id: "camera",
-    label: "Câmera local",
-    description: "Usada só quando você ativa os gestos na demo; o processamento é local.",
+    id: "gestures",
+    label: "Controle por gestos",
+    description:
+      "Permite ativar a câmera na demo. O processamento é local; desligado, a câmera é liberada na hora.",
     icon: Camera,
   },
   {
     id: "analytics",
     label: "Eventos de produto",
-    description: "Cliques, partidas e game over enviados para a camada de analytics.",
+    description:
+      "Envia page views, partidas e game over para Vercel Analytics e GA4. Desligado, nada é enviado.",
     icon: Gauge,
-  },
-  {
-    id: "alerts",
-    label: "Alertas de performance",
-    description: "Estrutura pronta para erro, FPS baixo e queda de detecção.",
-    icon: Bell,
   },
 ];
 
 export function SettingsPanel() {
-  const [enabled, setEnabled] = useState<Record<string, boolean>>({
-    camera: true,
-    analytics: true,
-    alerts: true,
-  });
+  const preferences = usePreferences();
 
   return (
     <div className="settings-layout">
@@ -58,8 +60,8 @@ export function SettingsPanel() {
       <section className="panel" id="runtime">
         <div className="panel__header">
           <div>
-            <span className="eyebrow">Runtime</span>
-            <h2>Configurações</h2>
+            <span className="eyebrow">Privacidade</span>
+            <h2>Preferências</h2>
           </div>
           <SlidersHorizontal size={20} aria-hidden />
         </div>
@@ -77,19 +79,15 @@ export function SettingsPanel() {
                 </span>
                 <input
                   type="checkbox"
-                  checked={enabled[setting.id]}
-                  onChange={(event) =>
-                    setEnabled((current) => ({
-                      ...current,
-                      [setting.id]: event.target.checked,
-                    }))
-                  }
+                  checked={preferences[setting.id]}
+                  onChange={(event) => getPreferencesStore().set(setting.id, event.target.checked)}
                   aria-label={setting.label}
                 />
               </label>
             );
           })}
         </div>
+        <p className="settings-note">Preferências salvas só neste navegador.</p>
       </section>
 
       <section className="panel">

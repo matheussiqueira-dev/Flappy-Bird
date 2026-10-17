@@ -1,6 +1,7 @@
 "use client";
 
-import { Hand, Pause, Play, RotateCcw, Zap } from "lucide-react";
+import { Hand, MoveVertical, Pause, Play, RotateCcw, Zap } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DEFAULT_GAME_CONFIG } from "@/features/game/domain/config";
@@ -8,11 +9,14 @@ import {
   advance,
   createGame,
   flap,
+  setControlMode,
+  setSteerTarget,
   startGame,
   togglePause,
   totalFlaps,
 } from "@/features/game/domain/engine";
 import type {
+  ControlMode,
   GameEvent,
   GameState,
   GameStatus,
@@ -20,6 +24,7 @@ import type {
 } from "@/features/game/domain/types";
 import { renderGame } from "@/features/game/render/canvas-renderer";
 import { useGestureControl, type GestureUiState } from "@/features/gesture/ui/use-gesture-control";
+import { usePreferences } from "@/features/preferences/use-preferences";
 import { getSessionRepository } from "@/features/telemetry/infrastructure/session-repository";
 import { trackProductEvent } from "@/lib/analytics";
 
@@ -143,19 +148,39 @@ export function GameDemo() {
   }, [publish]);
 
   const onGestureFlap = useCallback(() => handleFlap("gesture"), [handleFlap]);
+  const onGestureSteer = useCallback((target: number) => {
+    setSteerTarget(stateRef.current, target);
+  }, []);
   const {
     state: gestureState,
     start: startGestures,
     stop: stopGestures,
     videoRef: gestureVideoRef,
     overlayRef: gestureOverlayRef,
-  } = useGestureControl({ onFlap: onGestureFlap });
+  } = useGestureControl({ onFlap: onGestureFlap, onSteer: onGestureSteer });
+
+  const gestureActive = gestureState.status === "active" || gestureState.status === "loading";
+  const { gestures: gesturesAllowed } = usePreferences();
+
+  // Desligar nas configurações (inclusive em outra aba) libera a câmera na hora.
+  useEffect(() => {
+    if (!gesturesAllowed && gestureActive) stopGestures();
+  }, [gesturesAllowed, gestureActive, stopGestures]);
+
+  // O modo "altura da mão" só existe com a câmera ligada; sem ela, volta ao clássico.
+  const [preferredMode, setPreferredMode] = useState<ControlMode>("flap");
+  const controlMode: ControlMode = gestureActive ? preferredMode : "flap";
+
+  useEffect(() => {
+    setControlMode(stateRef.current, controlMode);
+    publish();
+  }, [controlMode, publish]);
 
   // O texto do overlay muda com o input ativo sem reiniciar o loop.
-  const gestureStatusRef = useRef<GestureUiState["status"]>("off");
+  const hintRef = useRef(startHintFor("off", "flap"));
   useEffect(() => {
-    gestureStatusRef.current = gestureState.status;
-  }, [gestureState.status]);
+    hintRef.current = startHintFor(gestureState.status, controlMode);
+  }, [gestureState.status, controlMode]);
 
   // Recorde salvo é lido só no cliente para não divergir da renderização do servidor.
   useEffect(() => {
@@ -183,7 +208,7 @@ export function GameDemo() {
       last = now;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      renderGame(ctx, state, { startHint: startHintFor(gestureStatusRef.current) });
+      renderGame(ctx, state, { startHint: hintRef.current });
 
       if (events.length > 0) {
         handleEvents(events);
@@ -243,8 +268,6 @@ export function GameDemo() {
     };
   }, [handleFlap, pauseOrResume]);
 
-  const gestureActive = gestureState.status === "active" || gestureState.status === "loading";
-
   return (
     <section ref={consoleRef} className="game-console" aria-label="Demo jogável">
       <div className="game-console__viewport">
@@ -291,15 +314,17 @@ export function GameDemo() {
             <Zap size={16} aria-hidden />
             Flap
           </button>
-          <button
-            className={gestureActive ? "button button--active" : "button"}
-            type="button"
-            aria-pressed={gestureActive}
-            onClick={gestureActive ? stopGestures : startGestures}
-          >
-            <Hand size={16} aria-hidden />
-            {gestureActive ? "Desligar gestos" : "Jogar com gestos"}
-          </button>
+          {gesturesAllowed ? (
+            <button
+              className={gestureActive ? "button button--active" : "button"}
+              type="button"
+              aria-pressed={gestureActive}
+              onClick={gestureActive ? stopGestures : startGestures}
+            >
+              <Hand size={16} aria-hidden />
+              {gestureActive ? "Desligar gestos" : "Jogar com gestos"}
+            </button>
+          ) : null}
           <button className="button" type="button" onClick={restart}>
             <RotateCcw size={16} aria-hidden />
             Reiniciar
@@ -315,13 +340,45 @@ export function GameDemo() {
         </div>
       </div>
 
-      <GestureStatusLine state={gestureState} />
+      {gestureActive ? (
+        <div className="mode-switch" role="group" aria-label="Modo de controle por gestos">
+          <button
+            type="button"
+            className={controlMode === "flap" ? "mode-switch__option mode-switch__option--active" : "mode-switch__option"}
+            aria-pressed={controlMode === "flap"}
+            onClick={() => setPreferredMode("flap")}
+          >
+            <Hand size={15} aria-hidden />
+            Abrir e fechar
+          </button>
+          <button
+            type="button"
+            className={controlMode === "steer" ? "mode-switch__option mode-switch__option--active" : "mode-switch__option"}
+            aria-pressed={controlMode === "steer"}
+            onClick={() => setPreferredMode("steer")}
+          >
+            <MoveVertical size={15} aria-hidden />
+            Altura da mão
+          </button>
+        </div>
+      ) : null}
+
+      {gesturesAllowed ? (
+        <GestureStatusLine state={gestureState} mode={controlMode} />
+      ) : (
+        <p className="gesture-status">
+          Controle por gestos desativado nas <Link href="/settings#runtime">preferências</Link>.
+        </p>
+      )}
     </section>
   );
 }
 
-function startHintFor(status: GestureUiState["status"]): string {
-  return status === "active" ? "Feche e abra a mão para voar" : "Toque, clique ou use espaço";
+function startHintFor(status: GestureUiState["status"], mode: ControlMode): string {
+  if (status !== "active") return "Toque, clique ou use espaço";
+  return mode === "steer"
+    ? "Feche e abra a mão para começar"
+    : "Feche e abra a mão para voar";
 }
 
 const POSE_LABEL = {
@@ -346,7 +403,7 @@ function GestureBadge({ state }: { state: GestureUiState }) {
   );
 }
 
-function GestureStatusLine({ state }: { state: GestureUiState }) {
+function GestureStatusLine({ state, mode }: { state: GestureUiState; mode: ControlMode }) {
   if (state.status === "error") {
     return (
       <p className="gesture-status gesture-status--error" role="alert">
@@ -368,7 +425,9 @@ function GestureStatusLine({ state }: { state: GestureUiState }) {
     <p className="gesture-status" aria-live="polite">
       {state.status === "loading"
         ? "Baixando o modelo de mão e pedindo acesso à câmera…"
-        : "Gestos ativos: feche a mão e abra de novo para cada flap."}
+        : mode === "steer"
+          ? "Altura da mão: o pássaro acompanha sua mão. Feche e abra para começar."
+          : "Gestos ativos: feche a mão e abra de novo para cada flap."}
     </p>
   );
 }
