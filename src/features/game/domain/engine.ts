@@ -156,6 +156,11 @@ export function stepTick(
     state.birdY += state.birdVelocity;
   }
 
+  if (!config.ceilingKills && state.birdY - config.birdRadius < 0) {
+    state.birdY = config.birdRadius;
+    state.birdVelocity = Math.max(0, state.birdVelocity);
+  }
+
   if (state.pipes.length === 0 || state.spawnTimer > config.pipeSpawnInterval) {
     state.pipes.push(spawnPipe(state.tick, config));
     state.spawnTimer = 0;
@@ -199,7 +204,7 @@ export function detectCollision(
     return true;
   }
 
-  if (state.birdY - birdRadius <= 0) {
+  if (config.ceilingKills && state.birdY - birdRadius <= 0) {
     return true;
   }
 
@@ -231,7 +236,7 @@ function steerBird(state: GameState, config: GameConfig) {
 function spawnPipe(tick: number, config: GameConfig): Pipe {
   const min = config.pipeGapMargin;
   const max = config.height - config.groundHeight - config.pipeGapMargin;
-  const wave = Math.sin(tick / 28) * 74;
+  const wave = Math.sin(tick / 28) * config.pipeWaveAmplitude;
   const gapY = Math.max(min, Math.min(max, config.height * 0.48 + wave));
 
   return { x: config.width + config.pipeWidth, gapY, passed: false };

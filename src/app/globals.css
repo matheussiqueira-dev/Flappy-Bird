@@ -524,6 +524,153 @@ button {
   color: #17694a;
 }
 
+.mode-switch__tag,
+.gesture-guide__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #8a5a00;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.gesture-guide {
+  border-top: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.gesture-guide summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gesture-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.gesture-guide summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.gesture-guide[open] summary::after {
+  transform: rotate(-135deg);
+}
+
+.gesture-guide summary svg,
+.gesture-guide__setup svg,
+.gesture-guide__rules svg {
+  flex: 0 0 auto;
+  color: var(--leaf);
+}
+
+.gesture-guide__body {
+  display: grid;
+  gap: 14px;
+  padding: 0 14px 16px;
+}
+
+.gesture-guide__setup,
+.gesture-guide__rules {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #28333b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.gesture-guide__setup li,
+.gesture-guide__rules li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.gesture-guide__setup svg,
+.gesture-guide__rules svg {
+  margin-top: 3px;
+}
+
+.gesture-guide__rules {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.gesture-guide__modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gesture-guide__mode {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fbfcfb;
+}
+
+.gesture-guide__mode--active {
+  border-color: var(--leaf);
+  background: #eef8f3;
+}
+
+.gesture-guide__mode header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.gesture-guide__mode h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.gesture-guide__mode em {
+  margin-left: auto;
+  color: #17694a;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.gesture-guide__mode p {
+  margin: 0;
+  color: #28333b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.gesture-guide__gesture {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  color: #17694a;
+  border: 1px solid var(--line);
+}
+
 .gesture-status {
   margin: 0;
   padding: 10px 14px 14px;
@@ -1464,6 +1611,10 @@ button {
 
   .gesture-badge {
     font-size: 0.62rem;
+  }
+
+  .gesture-guide__modes {
+    grid-template-columns: 1fr;
   }
 }
 

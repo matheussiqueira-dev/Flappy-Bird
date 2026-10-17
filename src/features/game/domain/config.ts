@@ -18,8 +18,34 @@ export const DEFAULT_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
   pipeSpeed: 3.1,
   pipeSpawnInterval: 96,
   pipeGapMargin: 110,
+  pipeWaveAmplitude: 74,
+  ceilingKills: true,
   steerSmoothing: 0.15,
   steerMarginPx: 4,
   tickMs: 1000 / 60,
   maxTicksPerFrame: 5,
+});
+
+/**
+ * Física assistida para o controle por gestos.
+ *
+ * Um clique é instantâneo; um flap por gesto exige fechar e abrir a mão
+ * (~300–400 ms) mais o atraso de câmera e detecção. Com a física do clique o
+ * pássaro cai rápido demais para esse ritmo. Aqui um flap sobe ~104 px e a
+ * queda é lenta, então um ciclo de mão a cada 1,5 s ainda mantém o voo
+ * (calibrado em gesture-playability.test.ts). Os canos seguem a engine Python
+ * original, feita para gestos: vão grande, velocidade 2,0 e intervalo de 150
+ * ticks. O teto não encerra a partida, então flaps a mais não são punidos.
+ */
+export const GESTURE_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
+  ...DEFAULT_GAME_CONFIG,
+  gravity: 0.12,
+  flapVelocity: -5,
+  maxFallSpeed: 2,
+  pipeGap: 240,
+  pipeGapMargin: 150,
+  pipeWaveAmplitude: 40,
+  pipeSpeed: 2,
+  pipeSpawnInterval: 150,
+  ceilingKills: false,
 });
