@@ -1,0 +1,20 @@
+import { flap, togglePause } from "./engine";
+import type { GameEvent, GameState, InputSource } from "./types";
+
+export function pauseWhenHandLost(state: GameState, gestureOnly: boolean, handAvailable: boolean): boolean {
+  if (!gestureOnly || handAvailable || state.status !== "playing") return false;
+  togglePause(state);
+  return true;
+}
+
+/** Durante uma sessão gestual, só uma nova transição da mão pode jogar/retomar. */
+export function applyPlayerFlap(
+  state: GameState,
+  source: InputSource,
+  gestureOnly: boolean,
+  handAvailable: boolean,
+): GameEvent[] {
+  if (gestureOnly && (source !== "gesture" || !handAvailable)) return [];
+  if (gestureOnly && state.status === "paused") togglePause(state);
+  return flap(state, source);
+}

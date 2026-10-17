@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { product } from "@/lib/constants";
+import { getServerEnv } from "@/lib/env";
 
 import "./globals.css";
 
@@ -76,8 +77,7 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const enableVercelInsights =
-    process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
+  const enableVercelInsights = getServerEnv().isVercel;
 
   return (
     <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>

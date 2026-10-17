@@ -71,7 +71,7 @@ export const insights: Insight[] = [
   {
     title: "Risco original isolado",
     description:
-      "O engine Python segue preservado, mas a experiência de portfólio agora roda sem webcam ou dependências nativas.",
+      "O engine Python segue preservado; a demo web roda sem instalação e o controle por gestos usa a webcam direto no navegador.",
     severity: "high",
   },
 ];
@@ -79,7 +79,7 @@ export const insights: Insight[] = [
 export const architectureLayers = [
   {
     name: "Web Experience",
-    detail: "Next.js, React, TypeScript, canvas e PWA.",
+    detail: "Next.js, React, TypeScript, canvas, PWA e gestos via MediaPipe no navegador.",
     status: "Produção",
   },
   {

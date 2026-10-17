@@ -7,6 +7,8 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { publicEnv } from "@/lib/env";
+
 export const developer = {
   name: "Matheus Siqueira",
   portfolio: "https://www.matheussiqueira.dev",
@@ -20,8 +22,7 @@ export const product = {
   description:
     "Aplicação web profissional para demonstrar controle gestual, visão computacional e arquitetura preparada para Vercel.",
   repository: "https://github.com/matheussiqueira-dev/Flappy-Bird",
-  siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://flappy-bird-gestos.vercel.app",
+  siteUrl: publicEnv.siteUrl,
 };
 
 export const appRoutes = [

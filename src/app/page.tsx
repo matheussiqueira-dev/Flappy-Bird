@@ -112,8 +112,8 @@ export default function HomePage() {
             <span>03</span>
             <h2>Dashboard inteligente</h2>
             <p>
-              KPIs, tendências, alertas e insights estão isolados em mock data
-              substituível por fontes reais.
+              Telemetria real das suas partidas, ao lado de um dataset de
+              amostra rotulado que define o contrato para dados agregados.
             </p>
           </article>
         </section>

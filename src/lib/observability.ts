@@ -1,3 +1,5 @@
+import { getServerEnv } from "@/lib/env";
+
 export type RequestContext = {
   route: string;
   method?: string;
@@ -39,7 +41,7 @@ export function createRequestContext(request: Request, route: string): RequestCo
     method: request.method,
     requestId: vercelId ?? request.headers.get("x-request-id") ?? requestIdFallback(),
     vercelId,
-    region: process.env.VERCEL_REGION,
+    region: getServerEnv().vercelRegion,
   };
 }
 
@@ -86,7 +88,7 @@ export async function reportServerError(
     errorMessage: normalized.message,
   });
 
-  const webhookUrl = process.env.ERROR_WEBHOOK_URL;
+  const webhookUrl = getServerEnv().errorWebhookUrl;
   if (!webhookUrl) {
     return;
   }
