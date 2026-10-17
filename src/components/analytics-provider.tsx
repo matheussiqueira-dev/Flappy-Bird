@@ -5,12 +5,14 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 import { useEffect } from "react";
 
+import { publicEnv } from "@/lib/env";
+
 type AnalyticsProviderProps = {
   enableVercelInsights: boolean;
 };
 
 export function AnalyticsProvider({ enableVercelInsights }: AnalyticsProviderProps) {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const { gaId } = publicEnv;
 
   return (
     <>
