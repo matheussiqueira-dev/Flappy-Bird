@@ -308,10 +308,16 @@ button {
   color: #ffffff;
 }
 
-.button:hover,
-.icon-button:hover {
+.button:not(:disabled):hover,
+.icon-button:not(:disabled):hover {
   transform: translateY(-1px);
   border-color: var(--ink);
+}
+
+.button:disabled,
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .icon-button {

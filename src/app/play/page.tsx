@@ -24,7 +24,12 @@ export default function PlayPage() {
             <li>Clique em &quot;Jogar com gestos&quot; e permita o acesso à câmera.</li>
             <li>Mostre uma mão para a câmera, a cerca de meio metro, com boa iluminação.</li>
             <li>Feche a mão e abra de novo: cada abertura é um flap. A primeira inicia a partida.</li>
+            <li>Sem mão por mais de 600 ms, o jogo pausa. Mostre a mão, feche e abra para retomar.</li>
           </ol>
+          <p>
+            Com a câmera ligada, os controles de flap e reinício manuais ficam desativados.
+            Você pode pausar por segurança; a retomada usa um novo gesto.
+          </p>
           <p>
             O hand tracking roda inteiro no navegador com MediaPipe. Nenhuma imagem da câmera é
             enviada para servidor, e a câmera desliga ao sair da página ou clicar em &quot;Desligar

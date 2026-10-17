@@ -93,6 +93,13 @@ describe("GestureMapper", () => {
     mapper.reset();
     expect(mapper.update({ pose: "open", timestampMs: 1000 }).shouldFlap).toBe(false);
   });
+
+  it("não pula quando uma mão reaparece aberta após perder o rastreamento", () => {
+    const mapper = new GestureMapper();
+    feed(mapper, ["closed", "closed"]);
+    expect(feed(mapper, [null, null, "open", "open"], 1000)).not.toContain(true);
+    expect(feed(mapper, ["closed", "closed", "open", "open"], 1200)).toContain(true);
+  });
 });
 
 describe("HandSteering", () => {

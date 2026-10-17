@@ -242,6 +242,28 @@ Implementado:
 
 ## Roadmap Futuro
 
+### Rodada local de 17/10/2026
+
+Com os gestos ligados, flap e reinício usam exclusivamente a mão; toque e teclado
+continuam disponíveis na demo manual quando a câmera está desligada. Perder a mão
+por 600 ms pausa a partida; mostre a mão, feche e abra para retomar. Permissão da
+câmera continua sendo concedida pela interface do navegador. O botão de pausa é
+um controle de segurança; retomar durante a sessão gestual usa a mão.
+
+O cancelamento libera câmera e modelo, inclusive quando a inicialização termina
+tarde. A engine Python e as rotas existentes foram preservadas.
+
+Documentação atual: [plano](MASTER_EVOLUTION_PLAN.md),
+[diagnóstico](REPOSITORY_TECHNICAL_AUDIT.md),
+[pesquisa](GITHUB_RESEARCH_AND_FEATURES.md),
+[prioridades](ROADMAP_AND_SKILLS.md),
+[validação e limites](VALIDATION_REPORT.md) e [changelog](CHANGELOG.md).
+
+Validação em webcam física e publicação Vercel permanecem pendentes. Testes com
+câmera sintética não demonstram precisão com uma mão humana.
+
+### Próximas evoluções
+
 - Persistir eventos reais em banco analítico
 - Criar leaderboard online
 - Adicionar testes E2E completos com Playwright

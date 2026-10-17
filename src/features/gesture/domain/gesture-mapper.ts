@@ -36,12 +36,16 @@ export class GestureMapper {
   private candidatePose: GestureOutput["stablePose"] = null;
   private candidateFrames = 0;
   private lastFlapAt = Number.NEGATIVE_INFINITY;
+  private lastSeenAt = Number.NEGATIVE_INFINITY;
 
   constructor(options: Partial<GestureMapperOptions> = {}) {
     this.options = { ...DEFAULT_GESTURE_OPTIONS, ...options };
   }
 
   update({ pose, timestampMs }: GestureObservation): GestureOutput {
+    // Não interprete uma mão reaparecendo como continuação de um gesto antigo.
+    if (timestampMs - this.lastSeenAt >= 600) this.reset();
+    if (pose !== null) this.lastSeenAt = timestampMs;
     if (pose === null || pose === "uncertain") {
       this.candidatePose = null;
       this.candidateFrames = 0;
@@ -78,5 +82,6 @@ export class GestureMapper {
     this.candidatePose = null;
     this.candidateFrames = 0;
     this.lastFlapAt = Number.NEGATIVE_INFINITY;
+    this.lastSeenAt = Number.NEGATIVE_INFINITY;
   }
 }

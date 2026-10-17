@@ -8,13 +8,13 @@ import { DEFAULT_GAME_CONFIG } from "@/features/game/domain/config";
 import {
   advance,
   createGame,
-  flap,
   setControlMode,
   setSteerTarget,
   startGame,
   togglePause,
   totalFlaps,
 } from "@/features/game/domain/engine";
+import { applyPlayerFlap, pauseWhenHandLost } from "@/features/game/domain/player-input";
 import type {
   ControlMode,
   GameEvent,
@@ -22,6 +22,7 @@ import type {
   GameStatus,
   InputSource,
 } from "@/features/game/domain/types";
+import { HandPresence } from "@/features/gesture/domain/hand-presence";
 import { renderGame } from "@/features/game/render/canvas-renderer";
 import { useGestureControl, type GestureUiState } from "@/features/gesture/ui/use-gesture-control";
 import { usePreferences } from "@/features/preferences/use-preferences";
@@ -89,6 +90,8 @@ export function GameDemo() {
   const stateRef = useRef<GameState>(createGame());
   const lastInputRef = useRef<InputSource>("pointer");
   const isVisibleRef = useRef(false);
+  const gestureOnlyRef = useRef(false);
+  const handPresenceRef = useRef(new HandPresence());
   const [snapshot, setSnapshot] = useState<Snapshot>(INITIAL_SNAPSHOT);
 
   const publish = useCallback(() => setSnapshot(toSnapshot(stateRef.current)), []);
@@ -132,17 +135,24 @@ export function GameDemo() {
   const handleFlap = useCallback(
     (source: InputSource) => {
       lastInputRef.current = source;
-      handleEvents(flap(stateRef.current, source));
+      handleEvents(applyPlayerFlap(
+        stateRef.current,
+        source,
+        gestureOnlyRef.current,
+        handPresenceRef.current.isAvailable(performance.now()),
+      ));
     },
     [handleEvents],
   );
 
   const restart = useCallback(() => {
+    if (gestureOnlyRef.current) return;
     lastInputRef.current = "pointer";
     handleEvents(startGame(stateRef.current));
   }, [handleEvents]);
 
   const pauseOrResume = useCallback(() => {
+    if (gestureOnlyRef.current && stateRef.current.status !== "playing") return;
     togglePause(stateRef.current);
     publish();
   }, [publish]);
@@ -151,15 +161,27 @@ export function GameDemo() {
   const onGestureSteer = useCallback((target: number) => {
     setSteerTarget(stateRef.current, target);
   }, []);
+  const onHandSeen = useCallback((timestampMs: number) => {
+    handPresenceRef.current.observe(timestampMs);
+  }, []);
   const {
     state: gestureState,
     start: startGestures,
     stop: stopGestures,
     videoRef: gestureVideoRef,
     overlayRef: gestureOverlayRef,
-  } = useGestureControl({ onFlap: onGestureFlap, onSteer: onGestureSteer });
+  } = useGestureControl({ onFlap: onGestureFlap, onSteer: onGestureSteer, onHandSeen });
 
   const gestureActive = gestureState.status === "active" || gestureState.status === "loading";
+  useEffect(() => {
+    gestureOnlyRef.current = gestureActive;
+    handPresenceRef.current.reset();
+    // Ativar/desativar a câmera nunca deve iniciar nem deixar uma partida cair.
+    if (stateRef.current.status === "playing") {
+      togglePause(stateRef.current);
+      publish();
+    }
+  }, [gestureActive, publish]);
   const { gestures: gesturesAllowed } = usePreferences();
 
   // Desligar nas configurações (inclusive em outra aba) libera a câmera na hora.
@@ -204,6 +226,9 @@ export function GameDemo() {
 
     const loop = (now: number) => {
       const state = stateRef.current;
+      if (pauseWhenHandLost(state, gestureOnlyRef.current, handPresenceRef.current.isAvailable(now))) {
+        publish();
+      }
       const events = advance(state, now - last);
       last = now;
 
@@ -310,7 +335,7 @@ export function GameDemo() {
         </div>
 
         <div className="button-row">
-          <button className="button button--primary" type="button" onClick={() => handleFlap("pointer")}>
+          <button className="button button--primary" type="button" disabled={gestureActive} onClick={() => handleFlap("pointer")}>
             <Zap size={16} aria-hidden />
             Flap
           </button>
@@ -325,7 +350,7 @@ export function GameDemo() {
               {gestureActive ? "Desligar gestos" : "Jogar com gestos"}
             </button>
           ) : null}
-          <button className="button" type="button" onClick={restart}>
+          <button className="button" type="button" disabled={gestureActive} onClick={restart}>
             <RotateCcw size={16} aria-hidden />
             Reiniciar
           </button>
@@ -333,6 +358,7 @@ export function GameDemo() {
             className="icon-button"
             type="button"
             onClick={pauseOrResume}
+            disabled={gestureActive && snapshot.status !== "playing"}
             aria-label={snapshot.status === "paused" ? "Retomar partida" : "Pausar partida"}
           >
             {snapshot.status === "paused" ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
@@ -364,7 +390,7 @@ export function GameDemo() {
       ) : null}
 
       {gesturesAllowed ? (
-        <GestureStatusLine state={gestureState} mode={controlMode} />
+        <GestureStatusLine state={gestureState} mode={controlMode} paused={snapshot.status === "paused"} />
       ) : (
         <p className="gesture-status">
           Controle por gestos desativado nas <Link href="/settings#runtime">preferências</Link>.
@@ -403,7 +429,7 @@ function GestureBadge({ state }: { state: GestureUiState }) {
   );
 }
 
-function GestureStatusLine({ state, mode }: { state: GestureUiState; mode: ControlMode }) {
+function GestureStatusLine({ state, mode, paused }: { state: GestureUiState; mode: ControlMode; paused: boolean }) {
   if (state.status === "error") {
     return (
       <p className="gesture-status gesture-status--error" role="alert">
@@ -425,9 +451,11 @@ function GestureStatusLine({ state, mode }: { state: GestureUiState; mode: Contr
     <p className="gesture-status" aria-live="polite">
       {state.status === "loading"
         ? "Baixando o modelo de mão e pedindo acesso à câmera…"
-        : mode === "steer"
-          ? "Altura da mão: o pássaro acompanha sua mão. Feche e abra para começar."
-          : "Gestos ativos: feche a mão e abra de novo para cada flap."}
+        : paused
+          ? "Partida pausada. Mostre a mão, feche e abra para retomar."
+          : mode === "steer"
+            ? "Altura da mão: o pássaro acompanha sua mão. Feche e abra para começar. Sem mão, o jogo pausa."
+            : "Gestos ativos: feche a mão e abra de novo para cada flap. Teclado e toque desativados. Sem mão, o jogo pausa."}
     </p>
   );
 }

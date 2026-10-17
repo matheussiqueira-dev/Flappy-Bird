@@ -2,6 +2,7 @@ import type { HandLandmarker } from "@mediapipe/tasks-vision";
 
 import { classifyHand, type HandPose, type Landmark } from "../domain/hand-pose";
 import { DetectionBudget } from "./detection-budget";
+import { acquireAbortable } from "./abortable-resource";
 
 /** Arquivos WASM copiados de `@mediapipe/tasks-vision` por `scripts/copy-mediapipe-wasm.mjs`. */
 const WASM_BASE_PATH = "/mediapipe/wasm";
@@ -68,30 +69,35 @@ export async function startHandTracker({
     );
   }
 
-  const [landmarkerResult, streamResult] = await Promise.allSettled([
-    createLandmarker(),
-    openCamera(),
-  ]);
-
-  if (landmarkerResult.status === "rejected" || streamResult.status === "rejected") {
-    if (landmarkerResult.status === "fulfilled") landmarkerResult.value.close();
-    if (streamResult.status === "fulfilled") stopStream(streamResult.value);
-
-    throw streamResult.status === "rejected"
-      ? toCameraError(streamResult.reason)
-      : new HandTrackerError("model-failed", "Não foi possível carregar o modelo de mão.", {
-          cause: landmarkerResult.status === "rejected" ? landmarkerResult.reason : undefined,
-        });
+  // Permissão negada deve responder sem esperar pelo download do modelo.
+  // Se o navegador entregar a câmera após cancelar o prompt, ela é liberada.
+  let stream: MediaStream;
+  try {
+    stream = await acquireAbortable(openCamera, stopStream, signal);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw toCameraError(error);
   }
 
-  const landmarker = landmarkerResult.value;
-  const stream = streamResult.value;
+  const cancelCamera = () => stopStream(stream);
+  signal?.addEventListener("abort", cancelCamera, { once: true });
+  let landmarker: HandLandmarker;
+  try {
+    landmarker = await acquireAbortable(createLandmarker, (model) => model.close(), signal);
+  } catch (error) {
+    signal?.removeEventListener("abort", cancelCamera);
+    stopStream(stream);
+    if (signal?.aborted) throw error;
+    throw new HandTrackerError("model-failed", "Não foi possível carregar o modelo de mão.", { cause: error });
+  }
+  signal?.removeEventListener("abort", cancelCamera);
   let frameHandle: number | null = null;
   let stopped = false;
 
   const stop = () => {
     if (stopped) return;
     stopped = true;
+    signal?.removeEventListener("abort", stop);
     if (frameHandle !== null) cancelAnimationFrame(frameHandle);
     stopStream(stream);
     video.srcObject = null;
@@ -110,8 +116,10 @@ export async function startHandTracker({
 
   try {
     await video.play();
+    if (signal?.aborted) throw new DOMException("Rastreamento cancelado.", "AbortError");
   } catch (error) {
     stop();
+    if (signal?.aborted) throw error;
     throw toCameraError(error);
   }
 

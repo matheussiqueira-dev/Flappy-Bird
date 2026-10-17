@@ -7,6 +7,9 @@
 //
 // Uso: APP_URL=http://127.0.0.1:3000 node scripts/verify-gestures.mjs
 import { chromium } from "playwright";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 const baseUrl = process.env.APP_URL ?? "http://127.0.0.1:3000";
 const MODEL_TIMEOUT_MS = 90_000;
@@ -14,6 +17,8 @@ const MODEL_TIMEOUT_MS = 90_000;
 const EXPECTED_CSP_NOISE = /odml\.pa\.googleapis\.com|^INFO: /;
 
 const checks = [];
+const outDir = path.join(os.tmpdir(), "flappy-gestures-verification");
+fs.mkdirSync(outDir, { recursive: true });
 const record = (name, ok, detail = "") => {
   checks.push({ name, ok, detail });
   console.log(`${ok ? "ok  " : "FAIL"} ${name}${detail ? ` - ${detail}` : ""}`);
@@ -47,6 +52,14 @@ async function gestureFlow() {
     await status.filter({ hasText: "Gestos ativos" }).waitFor({ timeout: MODEL_TIMEOUT_MS });
     record("câmera + modelo iniciam e a UI fica ativa", true);
 
+    record("sessão gestual desativa flap e reinício manuais",
+      await page.getByRole("button", { name: "Flap", exact: true }).isDisabled() &&
+      await page.getByRole("button", { name: "Reiniciar", exact: true }).isDisabled());
+    await page.locator("canvas.game-canvas").click();
+    await page.locator("body").press("Space");
+    record("clique e espaço não iniciam partida com gestos ligados",
+      /Pronto/.test(await page.locator(".score-strip").innerText()));
+
     const video = await page.locator(".gesture-preview__video").evaluate((element) => ({
       readyState: element.readyState,
       width: element.videoWidth,
@@ -61,6 +74,12 @@ async function gestureFlow() {
     await page.locator(".gesture-badge", { hasText: "fps" }).waitFor({ timeout: 15_000 });
     const badge = await page.locator(".gesture-badge").innerText();
     record("loop de detecção rodando", /\d+ fps/.test(badge), badge);
+
+    await page.screenshot({ path: path.join(outDir, "play-gestures-desktop.png"), fullPage: true, animations: "disabled" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    record("sessão gestual sem overflow no celular", await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.screenshot({ path: path.join(outDir, "play-gestures-mobile.png"), fullPage: true, animations: "disabled" });
 
     const overlay = await page.locator(".gesture-preview__overlay").evaluate((canvas) => ({
       width: canvas.width,
@@ -83,6 +102,8 @@ async function gestureFlow() {
       .evaluate((element) => element.srcObject === null);
     const modeSwitchGone = (await page.locator(".mode-switch").count()) === 0;
     record("desligar libera a câmera e esconde o seletor", released && modeSwitchGone);
+    record("modo manual volta disponível ao desligar gestos",
+      await page.getByRole("button", { name: "Flap", exact: true }).isEnabled());
 
     record("sem erros inesperados no console", errors.length === 0, errors.join(" | "));
   } finally {
@@ -97,6 +118,41 @@ async function rejectCameraWith(page, errorName) {
     navigator.mediaDevices.getUserMedia = () =>
       Promise.reject(new DOMException("simulado", name));
   }, errorName);
+}
+
+async function cancelLoadingFlow() {
+  const browser = await chromium.launch({
+    args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+  });
+  try {
+    const page = await (await browser.newContext({ permissions: ["camera"] })).newPage();
+    await page.addInitScript(() => {
+      const open = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async (constraints) => {
+        const stream = await open(constraints);
+        window.__verificationTracks = stream.getTracks();
+        return stream;
+      };
+    });
+    let pendingRoute;
+    await page.route("**/hand_landmarker.task", (route) => { pendingRoute = route; });
+    await page.goto(`${baseUrl}/play`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Jogar com gestos" }).click();
+    // Espera pelo pedido de modelo retido na fronteira da rede, sem sleeps fixos.
+    const deadline = Date.now() + MODEL_TIMEOUT_MS;
+    while (!pendingRoute && Date.now() < deadline) await page.waitForTimeout(50);
+    if (!pendingRoute) throw new Error("Modelo não foi solicitado");
+    await page.getByRole("button", { name: "Desligar gestos" }).click();
+    await page.waitForFunction(() => window.__verificationTracks?.every((track) => track.readyState === "ended"));
+    record("cancelar modelo pendente libera os tracks da câmera", true);
+    await pendingRoute.abort();
+    await page.unroute("**/hand_landmarker.task");
+    record("cancelar carregamento restaura o botão sem erro tardio",
+      await page.getByRole("button", { name: "Jogar com gestos" }).count() === 1 &&
+      await page.locator(".gesture-status--error").count() === 0);
+  } finally {
+    await browser.close();
+  }
 }
 
 async function cameraErrorFlow(errorName, expected, label) {
@@ -155,7 +211,7 @@ async function preferencesFlow() {
   }
 }
 
-for (const flow of [gestureFlow, permissionDeniedFlow, noCameraFlow, unsupportedFlow, preferencesFlow]) {
+for (const flow of [gestureFlow, cancelLoadingFlow, permissionDeniedFlow, noCameraFlow, unsupportedFlow, preferencesFlow]) {
   try {
     await flow();
   } catch (error) {
