@@ -34,6 +34,10 @@ export type GameConfig = {
   pipeSpawnInterval: number;
   /** Margem mínima entre o centro do vão e as bordas jogáveis. */
   pipeGapMargin: number;
+  /** Variação vertical (±px) do centro do vão entre canos consecutivos. */
+  pipeWaveAmplitude: number;
+  /** Se falso, o teto só bloqueia o pássaro em vez de encerrar a partida. */
+  ceilingKills: boolean;
   /** Fração da distância até o alvo percorrida por tick no modo `steer`. */
   steerSmoothing: number;
   /** Folga entre o pássaro e o teto/chão no modo `steer`, em px. */

@@ -139,6 +139,16 @@ O componente `game-demo.tsx` virou uma camada fina, que liga input, engine, rend
 - **Performance com gestos ativos (encontrado pelo E2E):** com WebGL por software (VMs, drivers bloqueados), o delegate GPU do MediaPipe derrubava o jogo de 60 para 3 fps, com travadas de 383 ms. Duas correções: (1) renderizador por software detectado leva direto ao delegate CPU (XNNPACK); (2) um orçamento espaça as inferências conforme o custo medido, para não passarem de 30% da thread principal, descartando as duas primeiras medições (aquecimento). Mesmo ambiente depois: **47–54 fps** com gestos ativos. Com GPU de verdade a inferência é barata e o orçamento não limita nada.
 - **Mensagens de erro:** `NotSupportedError` (página sem HTTPS ou navegador sem suporte) caía em "câmera em uso por outro aplicativo"; agora orienta usar HTTPS.
 
+### 3.9 Jogabilidade por gestos: física assistida e guia
+
+O retorno de uso foi que o jogo estava difícil demais com gestos. Causa: a física era a mesma do clique, mas um flap por gesto exige fechar e abrir a mão (~300–400 ms) mais o atraso de câmera e detecção.
+
+- **Física assistida (`GESTURE_GAME_CONFIG`)**, ativa sempre que a câmera está ligada: gravidade 0,12 (era 0,48), impulso −5, queda máxima 2 px/tick (era 10,5), vão de 240 px (era 165), canos a 2,0 px/tick com intervalo de 150 ticks (valores da engine Python), ondulação dos vãos de ±40 px (era ±74) e teto que bloqueia em vez de derrubar.
+- **Calibração medida, não estimada:** `gesture-playability.test.ts` simula jogadores com ciclo de mão e atraso realistas. Com a física do clique, quem faz um ciclo a cada 0,8 s com 250 ms de atraso não passa de 3 canos; com a assistida, passa de 20, e um iniciante com ciclos de 1,5 s e 400 ms de atraso também. Uma primeira versão (gravidade 0,2) falhava com ciclos acima de 1,2 s, e a varredura mostrou isso.
+- **Tolerância maior à mão:** a pausa por perda da mão subiu de 600 ms para 1 s (`HAND_LOST_GRACE_MS`, compartilhado pelo mapeador de gestos).
+- **Recorde separado** para o modo gestual, já que a física é outra. Ligar ou desligar a câmera volta a partida para "Pronto" com a física certa.
+- **Painel "Como jogar com gestos"** dentro do console do jogo (landing e `/play`): preparo (câmera, distância, luz, confirmação pelo selo), os dois modos com o atual destacado e "Altura da mão" marcado como mais fácil, e as regras (pausa sem mão, "Ajustando…", física assistida).
+
 ## 4. Propostas (não implementadas) com guias táticos
 
 Ordenadas por relação entre valor e esforço.

@@ -53,11 +53,11 @@ describe("HandPresence", () => {
     const presence = new HandPresence();
     expect(presence.isAvailable(0)).toBe(false);
     presence.observe(100);
-    expect(presence.isAvailable(699)).toBe(true);
-    expect(presence.isAvailable(700)).toBe(false);
-    presence.observe(800);
-    expect(presence.isAvailable(810)).toBe(true);
+    expect(presence.isAvailable(1099)).toBe(true);
+    expect(presence.isAvailable(1100)).toBe(false);
+    presence.observe(1200);
+    expect(presence.isAvailable(1210)).toBe(true);
     presence.reset();
-    expect(presence.isAvailable(820)).toBe(false);
+    expect(presence.isAvailable(1220)).toBe(false);
   });
 });

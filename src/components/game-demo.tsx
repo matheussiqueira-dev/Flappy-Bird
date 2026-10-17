@@ -4,7 +4,8 @@ import { Hand, MoveVertical, Pause, Play, RotateCcw, Zap } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { DEFAULT_GAME_CONFIG } from "@/features/game/domain/config";
+import { GestureGuide } from "@/components/gesture-guide";
+import { DEFAULT_GAME_CONFIG, GESTURE_GAME_CONFIG } from "@/features/game/domain/config";
 import {
   advance,
   createGame,
@@ -17,6 +18,7 @@ import {
 import { applyPlayerFlap, pauseWhenHandLost } from "@/features/game/domain/player-input";
 import type {
   ControlMode,
+  GameConfig,
   GameEvent,
   GameState,
   GameStatus,
@@ -30,7 +32,12 @@ import { getSessionRepository } from "@/features/telemetry/infrastructure/sessio
 import { trackProductEvent } from "@/lib/analytics";
 
 const { width: WIDTH, height: HEIGHT } = DEFAULT_GAME_CONFIG;
-const HIGH_SCORE_KEY = "flappy-gestures-high-score";
+/** Recordes separados: a física dos gestos é mais suave que a do clique. */
+const HIGH_SCORE_KEYS = {
+  classic: "flappy-gestures-high-score",
+  gestures: "flappy-gestures-high-score:gestures",
+} as const;
+type HighScoreKey = (typeof HIGH_SCORE_KEYS)[keyof typeof HIGH_SCORE_KEYS];
 /** Intervalo de sincronização do placar com o React; o canvas roda a cada frame. */
 const UI_SYNC_TICKS = 8;
 
@@ -53,18 +60,18 @@ function toSnapshot(state: GameState): Snapshot {
   return { status: state.status, score: state.score, highScore: state.highScore };
 }
 
-function readHighScore(): number {
+function readHighScore(key: HighScoreKey): number {
   try {
-    const stored = Number(window.localStorage.getItem(HIGH_SCORE_KEY) ?? 0);
+    const stored = Number(window.localStorage.getItem(key) ?? 0);
     return Number.isSafeInteger(stored) && stored > 0 ? stored : 0;
   } catch {
     return 0;
   }
 }
 
-function writeHighScore(value: number) {
+function writeHighScore(key: HighScoreKey, value: number) {
   try {
-    window.localStorage.setItem(HIGH_SCORE_KEY, String(value));
+    window.localStorage.setItem(key, String(value));
   } catch {
     // Storage indisponível: o recorde vale só para esta sessão.
   }
@@ -92,6 +99,8 @@ export function GameDemo() {
   const isVisibleRef = useRef(false);
   const gestureOnlyRef = useRef(false);
   const handPresenceRef = useRef(new HandPresence());
+  const configRef = useRef<GameConfig>(DEFAULT_GAME_CONFIG);
+  const highScoreKeyRef = useRef<HighScoreKey>(HIGH_SCORE_KEYS.classic);
   const [snapshot, setSnapshot] = useState<Snapshot>(INITIAL_SNAPSHOT);
 
   const publish = useCallback(() => setSnapshot(toSnapshot(stateRef.current)), []);
@@ -107,7 +116,7 @@ export function GameDemo() {
         }
 
         if (event.type === "game-over") {
-          if (event.isNewRecord) writeHighScore(event.highScore);
+          if (event.isNewRecord) writeHighScore(highScoreKeyRef.current, event.highScore);
 
           getSessionRepository().append({
             id: createSessionId(),
@@ -140,6 +149,7 @@ export function GameDemo() {
         source,
         gestureOnlyRef.current,
         handPresenceRef.current.isAvailable(performance.now()),
+        configRef.current,
       ));
     },
     [handleEvents],
@@ -148,7 +158,7 @@ export function GameDemo() {
   const restart = useCallback(() => {
     if (gestureOnlyRef.current) return;
     lastInputRef.current = "pointer";
-    handleEvents(startGame(stateRef.current));
+    handleEvents(startGame(stateRef.current, configRef.current));
   }, [handleEvents]);
 
   const pauseOrResume = useCallback(() => {
@@ -176,11 +186,20 @@ export function GameDemo() {
   useEffect(() => {
     gestureOnlyRef.current = gestureActive;
     handPresenceRef.current.reset();
-    // Ativar/desativar a câmera nunca deve iniciar nem deixar uma partida cair.
-    if (stateRef.current.status === "playing") {
-      togglePause(stateRef.current);
-      publish();
-    }
+
+    // Ligar ou desligar a câmera troca a física (assistida nos gestos) e o
+    // recorde. A partida volta para "Pronto": nunca inicia sozinha nem cai
+    // com canos posicionados para a outra física. Também carrega o recorde
+    // salvo, só no cliente, para não divergir da renderização do servidor.
+    configRef.current = gestureActive ? GESTURE_GAME_CONFIG : DEFAULT_GAME_CONFIG;
+    highScoreKeyRef.current = gestureActive ? HIGH_SCORE_KEYS.gestures : HIGH_SCORE_KEYS.classic;
+    const state = stateRef.current;
+    Object.assign(
+      state,
+      createGame(readHighScore(highScoreKeyRef.current), configRef.current, state.controlMode),
+      { tick: state.tick },
+    );
+    publish();
   }, [gestureActive, publish]);
   const { gestures: gesturesAllowed } = usePreferences();
 
@@ -194,7 +213,7 @@ export function GameDemo() {
   const controlMode: ControlMode = gestureActive ? preferredMode : "flap";
 
   useEffect(() => {
-    setControlMode(stateRef.current, controlMode);
+    setControlMode(stateRef.current, controlMode, configRef.current);
     publish();
   }, [controlMode, publish]);
 
@@ -203,12 +222,6 @@ export function GameDemo() {
   useEffect(() => {
     hintRef.current = startHintFor(gestureState.status, controlMode);
   }, [gestureState.status, controlMode]);
-
-  // Recorde salvo é lido só no cliente para não divergir da renderização do servidor.
-  useEffect(() => {
-    stateRef.current.highScore = readHighScore();
-    publish();
-  }, [publish]);
 
   // Loop de render com timestep fixo no engine.
   useEffect(() => {
@@ -229,11 +242,11 @@ export function GameDemo() {
       if (pauseWhenHandLost(state, gestureOnlyRef.current, handPresenceRef.current.isAvailable(now))) {
         publish();
       }
-      const events = advance(state, now - last);
+      const events = advance(state, now - last, configRef.current);
       last = now;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      renderGame(ctx, state, { startHint: hintRef.current });
+      renderGame(ctx, state, { startHint: hintRef.current }, configRef.current);
 
       if (events.length > 0) {
         handleEvents(events);
@@ -385,6 +398,7 @@ export function GameDemo() {
           >
             <MoveVertical size={15} aria-hidden />
             Altura da mão
+            <span className="mode-switch__tag">mais fácil</span>
           </button>
         </div>
       ) : null}
@@ -396,6 +410,8 @@ export function GameDemo() {
           Controle por gestos desativado nas <Link href="/settings#runtime">preferências</Link>.
         </p>
       )}
+
+      {gesturesAllowed ? <GestureGuide activeMode={gestureActive ? controlMode : null} /> : null}
     </section>
   );
 }

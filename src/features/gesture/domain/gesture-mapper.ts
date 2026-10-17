@@ -1,4 +1,5 @@
 import type { HandPose } from "./hand-pose";
+import { HAND_LOST_GRACE_MS } from "./hand-presence";
 
 export type GestureMapperOptions = {
   /** Frames consecutivos com a mesma pose antes de aceitá-la como estável. */
@@ -44,7 +45,7 @@ export class GestureMapper {
 
   update({ pose, timestampMs }: GestureObservation): GestureOutput {
     // Não interprete uma mão reaparecendo como continuação de um gesto antigo.
-    if (timestampMs - this.lastSeenAt >= 600) this.reset();
+    if (timestampMs - this.lastSeenAt >= HAND_LOST_GRACE_MS) this.reset();
     if (pose !== null) this.lastSeenAt = timestampMs;
     if (pose === null || pose === "uncertain") {
       this.candidatePose = null;

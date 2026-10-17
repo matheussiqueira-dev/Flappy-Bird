@@ -246,7 +246,13 @@ Implementado:
 
 Com os gestos ligados, flap e reinício usam exclusivamente a mão; toque e teclado
 continuam disponíveis na demo manual quando a câmera está desligada. Perder a mão
-por 600 ms pausa a partida; mostre a mão, feche e abra para retomar. Permissão da
+por 1 s pausa a partida; mostre a mão, feche e abra para retomar.
+
+Com a câmera ligada, o jogo usa uma física assistida (`GESTURE_GAME_CONFIG`):
+gravidade e queda mais suaves, vão de 240 px, canos mais lentos e espaçados, e o
+teto não encerra a partida. O recorde do modo gestual é separado do clássico. As
+instruções de jogo ficam no painel "Como jogar com gestos", dentro do console do
+jogo. Permissão da
 câmera continua sendo concedida pela interface do navegador. O botão de pausa é
 um controle de segurança; retomar durante a sessão gestual usa a mão.
 

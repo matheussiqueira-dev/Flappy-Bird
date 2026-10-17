@@ -16,24 +16,20 @@ export default function PlayPage() {
         <section className="panel">
           <div className="panel__header">
             <div>
-              <span className="eyebrow">Como jogar com gestos</span>
-              <h2>Feche a mão, abra a mão, voe</h2>
+              <span className="eyebrow">Privacidade e requisitos</span>
+              <h2>A câmera fica no seu navegador</h2>
             </div>
           </div>
-          <ol className="steps-list">
-            <li>Clique em &quot;Jogar com gestos&quot; e permita o acesso à câmera.</li>
-            <li>Mostre uma mão para a câmera, a cerca de meio metro, com boa iluminação.</li>
-            <li>Feche a mão e abra de novo: cada abertura é um flap. A primeira inicia a partida.</li>
-            <li>Sem mão por mais de 600 ms, o jogo pausa. Mostre a mão, feche e abra para retomar.</li>
-          </ol>
-          <p>
-            Com a câmera ligada, os controles de flap e reinício manuais ficam desativados.
-            Você pode pausar por segurança; a retomada usa um novo gesto.
-          </p>
           <p>
             O hand tracking roda inteiro no navegador com MediaPipe. Nenhuma imagem da câmera é
             enviada para servidor, e a câmera desliga ao sair da página ou clicar em &quot;Desligar
-            gestos&quot;.
+            gestos&quot;. O passo a passo para jogar está no painel &quot;Como jogar com
+            gestos&quot;, logo abaixo do jogo.
+          </p>
+          <p>
+            Funciona em navegadores atuais com webcam, em HTTPS ou localhost. Com a câmera ligada,
+            só gestos controlam a partida: teclado e toque ficam desativados até você desligar os
+            gestos.
           </p>
         </section>
       </div>
