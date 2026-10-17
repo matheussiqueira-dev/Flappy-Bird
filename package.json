@@ -6,23 +6,28 @@
   "author": "Matheus Siqueira <https://www.matheussiqueira.dev>",
   "license": "MIT",
   "scripts": {
+    "predev": "node scripts/copy-mediapipe-wasm.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-mediapipe-wasm.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "audit": "npm audit --audit-level=moderate",
-    "verify": "npm run typecheck && npm run lint && npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "audit": "npm audit --omit=dev --audit-level=moderate",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:browser": "node scripts/verify-browser.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "lucide-react": "^1.17.0",
-    "next": "^16.2.6",
+    "next": "^16.3.8",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
@@ -31,11 +36,12 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.6",
+    "eslint-config-next": "^16.3.8",
     "playwright": "^1.60.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   },
   "overrides": {
-    "postcss": "8.5.15"
+    "postcss": "8.5.28"
   }
 }

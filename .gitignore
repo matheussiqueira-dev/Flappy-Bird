@@ -100,3 +100,6 @@ out/
 
 # Local environment variables
 .env*.local
+
+# MediaPipe WASM copiado de node_modules no predev/prebuild
+/public/mediapipe/
